@@ -1,0 +1,443 @@
+/* ============================================================
+   JOB TRACKER
+   White page, navy ink, blue accents. Status colour is a ramp:
+   the further an application advances, the deeper the blue.
+   Closed outcomes go quiet grey — never red. In a search that is
+   mostly rejections, red would drown the handful that are alive.
+   Offer is the one non-blue in the system, and it is earned.
+   Archivo (display + UI) / JetBrains Mono (dates, counts)
+   ============================================================ */
+
+:root {
+  --white: #ffffff;
+  --ink: #0e1b33;
+  --ink-soft: #44557b;
+  --muted: #6f7fa1;
+  --blue: #006dfe;
+  --blue-deep: #0053c7;
+  --sky: #9cc3ff;
+  --line: #d5e2f4;
+  --wash: #ecf3fe;
+  --rule: #eaf1fb;
+
+  /* status ramp — saturation encodes progress */
+  --s-applied: #9cc3ff;
+  --s-assessment: #5fa0ff;
+  --s-interview: #006dfe;
+  --s-next-phase: #0053c7;
+  --s-offer: #00a37a;
+  --s-rejected: #c3ccdb;
+  --s-withdrawn: #e0e6f0;
+  /* ghosted is not a stage, so it gets no ramp colour — hollow, the shape of
+     a status with nothing in it */
+  --s-ghosted: transparent;
+
+  --err: #d92d20;
+  --font-ui: "Archivo", "Helvetica Neue", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", monospace;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { color-scheme: light; }
+
+body {
+  background: var(--white);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection { background: var(--blue); color: #fff; }
+button, input, select { font-family: inherit; font-size: inherit; color: inherit; }
+button { cursor: pointer; }
+:is(a, button, select, input, th.sortable):focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.accent-bar { height: 6px; background: var(--blue); }
+
+/* ---------- micro-label ---------- */
+.kicker {
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* ---------- sign in ---------- */
+.login-stage { min-height: 100vh; display: grid; place-items: center; padding: 24px; }
+.login-card {
+  width: 100%; max-width: 360px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 12px 32px -20px rgba(14, 27, 51, 0.45);
+}
+.login-body { padding: 30px 28px 28px; }
+.login-body h1 {
+  font-size: 1.55rem; font-weight: 800; font-stretch: 112%;
+  letter-spacing: -0.02em; margin: 10px 0 4px;
+}
+.login-body .hint { color: var(--muted); font-size: 0.87rem; margin-bottom: 20px; }
+.field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+.field label {
+  font-size: 0.66rem; font-weight: 600; letter-spacing: 0.16em;
+  text-transform: uppercase; color: var(--ink-soft);
+}
+.field input {
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--white);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.field input:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px var(--wash); }
+.btn-primary {
+  width: 100%; padding: 11px 16px;
+  background: var(--blue); color: #fff;
+  border: none; border-radius: 4px;
+  font-weight: 700; font-size: 0.82rem;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  transition: background 0.15s;
+}
+.btn-primary:hover { background: var(--blue-deep); }
+.login-error { color: var(--err); font-size: 0.83rem; margin-top: 12px; min-height: 1em; }
+
+/* ---------- shell ---------- */
+.topbar { border-bottom: 1px solid var(--line); background: var(--white); }
+.topbar-inner {
+  max-width: 1440px; margin: 0 auto; padding: 0 24px;
+  display: flex; align-items: center; gap: 28px; height: 60px;
+}
+.brand { display: flex; align-items: baseline; gap: 10px; margin-right: auto; }
+.brand-mark {
+  font-weight: 800; font-stretch: 115%; font-size: 1.1rem;
+  color: var(--blue); letter-spacing: -0.01em; text-transform: uppercase;
+}
+.brand-sub {
+  font-size: 0.6rem; letter-spacing: 0.26em;
+  text-transform: uppercase; color: var(--muted);
+}
+.tabs { display: flex; gap: 2px; }
+.tabs button {
+  background: none; border: none;
+  font-size: 0.7rem; font-weight: 600; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--ink-soft);
+  padding: 8px 12px; border-radius: 3px;
+  transition: color 0.15s, background 0.15s;
+}
+.tabs button:hover { color: var(--ink); background: var(--wash); }
+.tabs button.active { color: var(--blue); background: var(--wash); }
+
+.wrap { max-width: 1440px; margin: 0 auto; padding: 26px 24px 64px; }
+
+/* ---------- pipeline (signature) ---------- */
+.pipeline { margin-bottom: 26px; }
+.pipeline-head {
+  display: flex; align-items: baseline; gap: 14px;
+  flex-wrap: wrap; margin-bottom: 10px;
+}
+.pipeline-count { font-size: 1.7rem; font-weight: 800; font-stretch: 110%; letter-spacing: -0.02em; }
+.pipeline-note { color: var(--muted); font-size: 0.87rem; margin-right: auto; }
+.pipeline-clear {
+  background: none; border: 1px solid var(--line); border-radius: 3px;
+  font-size: 0.65rem; font-weight: 600; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--ink-soft); padding: 5px 10px;
+}
+.pipeline-clear:hover { border-color: var(--blue); color: var(--blue); }
+
+/* ---------- toolbar ----------
+   One control height for every child, so the search field, the button and the
+   filter menu sit on a single baseline instead of three near-misses. */
+.toolbar { display: flex; gap: 10px; align-items: center; margin-bottom: 14px; flex-wrap: wrap; --ctl-h: 38px; }
+.toolbar input[type="search"], .toolbar input[type="text"] {
+  flex: 1; min-width: 200px; max-width: 340px;
+  height: var(--ctl-h); padding: 0 12px;
+  border: 1px solid var(--line); border-radius: 4px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.toolbar input:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px var(--wash); }
+.btn-ghost {
+  display: inline-flex; align-items: center; justify-content: center;
+  height: var(--ctl-h, 38px); padding: 0 14px;
+  background: var(--white);
+  border: 1px solid var(--line); border-radius: 4px;
+  font-size: 0.72rem; font-weight: 600; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--ink-soft);
+  white-space: nowrap;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+.btn-ghost:hover { border-color: var(--blue); color: var(--blue); background: var(--wash); }
+.toolbar .count { font-size: 0.72rem; color: var(--muted); margin-left: auto; font-family: var(--font-mono); }
+
+/* ---------- status filter menu ---------- */
+.status-menu { position: relative; height: var(--ctl-h, 38px); }
+.status-menu > summary {
+  list-style: none; cursor: pointer; user-select: none;
+  gap: 8px;
+}
+.status-menu > summary::-webkit-details-marker { display: none; }
+.status-menu[open] > summary { border-color: var(--blue); color: var(--blue); background: var(--wash); }
+.status-menu > summary:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+.caret { font-size: 0.6rem; line-height: 1; transition: transform 0.15s; }
+.status-menu[open] .caret { transform: rotate(180deg); }
+
+.menu-panel {
+  position: absolute; z-index: 20; top: calc(100% + 6px); left: 0;
+  min-width: 210px; padding: 6px;
+  background: var(--white);
+  border: 1px solid var(--line); border-radius: 6px;
+  box-shadow: 0 10px 28px rgba(14, 27, 51, 0.12);
+}
+.menu-actions {
+  display: flex; gap: 12px; padding: 4px 10px 8px;
+  border-bottom: 1px solid var(--rule); margin-bottom: 4px;
+}
+.link-btn {
+  background: none; border: none; padding: 0; cursor: pointer;
+  font: inherit; font-size: 0.68rem; font-weight: 600;
+  letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted);
+}
+.link-btn:hover { color: var(--blue); }
+
+.menu-row {
+  display: flex; align-items: center; gap: 9px;
+  padding: 6px 10px; border-radius: 4px; cursor: pointer;
+  font-size: 0.82rem; color: var(--ink-soft);
+}
+.menu-row:hover { background: var(--wash); color: var(--ink); }
+.menu-row input { accent-color: var(--blue); margin: 0; }
+.menu-row .dot { width: 9px; height: 9px; border-radius: 2px; flex: none; }
+.menu-row .dot-ghost { border: 1px solid var(--line); background: none !important; }
+.menu-row .menu-name { flex: 1; }
+.menu-row .n { font-family: var(--font-mono); font-size: 0.75rem; color: var(--muted); }
+.menu-row:has(input:checked) { color: var(--ink); font-weight: 600; }
+
+/* ---------- table ---------- */
+.table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 6px; }
+table { width: 100%; border-collapse: collapse; }
+thead th {
+  text-align: left; padding: 10px 14px;
+  background: var(--wash);
+  border-bottom: 1px solid var(--line);
+  font-size: 0.62rem; font-weight: 700; letter-spacing: 0.16em;
+  text-transform: uppercase; color: var(--ink-soft);
+  white-space: nowrap;
+}
+th.sortable { cursor: pointer; user-select: none; }
+th.sortable:hover { color: var(--blue); }
+th .arr { color: var(--blue); }
+tbody td { padding: 9px 14px; border-bottom: 1px solid var(--rule); vertical-align: middle; }
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:hover { background: #f8fbff; }
+
+/* Company and role are the only columns allowed to wrap; everything else is
+   pinned to its content (width:1% + nowrap) so the table fits the viewport
+   without a horizontal scrollbar. Role takes whatever is left over. */
+td.company { font-weight: 600; width: 17%; }
+td.role { color: var(--ink-soft); }
+td.date, th[data-sort$="_at"] { width: 1%; white-space: nowrap; }
+td.date { font-family: var(--font-mono); font-size: 0.78rem; color: var(--muted); }
+td.actions { text-align: right; width: 1%; white-space: nowrap; }
+
+/* status select styled as a pill; colour comes from the ramp */
+.status-select {
+  appearance: none;
+  padding: 4px 24px 4px 22px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-size: 0.74rem; font-weight: 600;
+  background-color: var(--wash);
+  background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+  background-position: calc(100% - 12px) 51%, calc(100% - 8px) 51%;
+  background-size: 4px 4px, 4px 4px;
+  background-repeat: no-repeat;
+  cursor: pointer;
+  transition: border-color 0.15s;
+  position: relative;
+  vertical-align: middle;
+}
+/* Stays in normal flow on purpose: display:flex on a <td> drops it out of
+   vertical-align:middle, which pins the pill to the top of any tall row. */
+.status-cell { position: relative; width: 1%; white-space: nowrap; }
+.status-cell::before {
+  content: ""; position: absolute;
+  left: 22px; top: 50%; transform: translateY(-50%);
+  width: 8px; height: 8px; border-radius: 2px;
+  background: var(--dot, var(--muted)); pointer-events: none; z-index: 1;
+}
+.status-select:hover { border-color: var(--line); }
+.status-cell[data-status="applied"]      { --dot: var(--s-applied); }
+.status-cell[data-status="assessment"]   { --dot: var(--s-assessment); }
+.status-cell[data-status="interview"]    { --dot: var(--s-interview); }
+.status-cell[data-status="next-phase"]   { --dot: var(--s-next-phase); }
+.status-cell[data-status="offer"]        { --dot: var(--s-offer); }
+.status-cell[data-status="rejected"]     { --dot: var(--s-rejected); }
+.status-cell[data-status="withdrawn"]    { --dot: var(--s-withdrawn); }
+.status-cell[data-status="rejected"] .status-select,
+.status-cell[data-status="withdrawn"] .status-select { color: var(--muted); background-color: #f4f6fa; }
+.status-cell[data-status="offer"] .status-select { color: #007d5d; background-color: #e6f7f2; }
+
+/* ---------- gone quiet ----------
+   A ghosted row keeps its real status — the tag reports the silence next to it.
+   Dimmed, not hidden: these are still the applications you might chase. */
+tr.is-ghosted td.company, tr.is-ghosted td.role { color: var(--muted); }
+tr.is-ghosted .status-select { opacity: 0.6; }
+tr.is-ghosted:hover .status-select { opacity: 1; }
+.ghost-tag {
+  display: inline-block; vertical-align: middle;
+  margin-left: 8px; padding: 2px 7px;
+  border: 1px dashed var(--line); border-radius: 999px;
+  font-family: var(--font-mono); font-size: 0.66rem;
+  color: var(--muted); white-space: nowrap; cursor: help;
+}
+
+.icon-btn {
+  background: none; border: 1px solid transparent; border-radius: 3px;
+  color: var(--muted); font-size: 0.7rem; font-weight: 600;
+  letter-spacing: 0.08em; text-transform: uppercase; padding: 4px 8px;
+  transition: color 0.15s, border-color 0.15s;
+}
+.icon-btn:hover { color: var(--blue); border-color: var(--line); }
+.icon-btn.danger:hover { color: var(--err); border-color: #f3c9c5; }
+
+.auto-check { accent-color: var(--blue); width: 15px; height: 15px; cursor: pointer; }
+
+.empty { padding: 40px 16px; text-align: center; color: var(--muted); font-size: 0.9rem; }
+
+/* ---------- timeline modal ---------- */
+.modal {
+  border: none; padding: 0; background: none;
+  max-width: min(680px, calc(100vw - 32px)); width: 100%;
+  max-height: min(78vh, 720px);
+  margin: auto;                      /* centres in the top layer */
+  overflow: visible;
+}
+.modal::backdrop {
+  background: rgba(14, 27, 51, 0.28);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+}
+.modal[open] { animation: modal-in 0.16s ease-out; }
+@keyframes modal-in {
+  from { opacity: 0; transform: translateY(6px) scale(0.99); }
+  to   { opacity: 1; transform: none; }
+}
+.modal-card {
+  display: flex; flex-direction: column;
+  max-height: min(78vh, 720px);
+  background: var(--white);
+  border: 1px solid var(--line); border-radius: 8px;
+  box-shadow: 0 24px 60px -20px rgba(14, 27, 51, 0.45);
+  overflow: hidden;
+}
+.modal-head {
+  display: flex; align-items: flex-start; gap: 16px;
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid var(--rule);
+}
+.modal-head > div { flex: 1; min-width: 0; }
+.modal-head h3 {
+  font-size: 1.2rem; font-weight: 800; font-stretch: 110%;
+  letter-spacing: -0.015em; margin-top: 4px;
+}
+.modal-sub { color: var(--muted); font-size: 0.85rem; margin-top: 2px; }
+.modal-body { overflow-y: auto; padding: 6px 20px 18px; }
+
+/* ---------- modal form ---------- */
+.modal-body.form { padding-top: 18px; }
+.field .opt {
+  font-size: 0.6rem; letter-spacing: 0.1em; color: var(--muted);
+  font-weight: 500; margin-left: 4px;
+}
+.field select {
+  height: 38px; padding: 0 10px;
+  border: 1px solid var(--line); border-radius: 4px;
+  background: var(--white); cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.field input { height: 38px; }
+.field select:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px var(--wash); }
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.form-err { color: var(--err); font-size: 0.83rem; min-height: 1em; margin-bottom: 10px; }
+.modal-foot { display: flex; justify-content: flex-end; gap: 10px; }
+.modal-foot .btn-primary { width: auto; height: 38px; padding: 0 18px; }
+.modal-foot .btn-ghost { height: 38px; }
+.modal-foot .btn-primary:disabled { opacity: 0.6; cursor: default; }
+
+/* One row per event: date rail on the left, everything else reading rightward. */
+.events { list-style: none; }
+.events li {
+  display: grid; grid-template-columns: 88px 1fr; gap: 14px;
+  padding: 12px 0; border-bottom: 1px solid var(--rule);
+}
+.events li:last-child { border-bottom: none; }
+.ev-date {
+  font-family: var(--font-mono); font-size: 0.76rem; color: var(--muted);
+  padding-top: 2px;
+}
+.ev-line { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.ev-kind {
+  font-size: 0.62rem; font-weight: 700; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--ink-soft);
+}
+.ev-move { font-size: 0.8rem; color: var(--blue); font-weight: 600; }
+.ev-move:empty, .ev-subject:empty { display: none; }
+.ev-subject { color: var(--ink-soft); font-size: 0.87rem; margin-top: 3px; }
+
+@media (max-width: 520px) {
+  .events li { grid-template-columns: 1fr; gap: 4px; }
+}
+
+/* ---------- history ---------- */
+.badge {
+  display: inline-block; padding: 2px 9px; border-radius: 999px;
+  font-size: 0.68rem; font-weight: 700; letter-spacing: 0.04em;
+}
+.badge.success { background: #e6f7f2; color: #007d5d; }
+.badge.partial { background: #fdf3e2; color: #9a6400; }
+.badge.error, .badge.stale { background: #fdeceb; color: var(--err); }
+.badge.running { background: var(--wash); color: var(--blue); }
+details.errors summary { cursor: pointer; color: var(--err); font-size: 0.8rem; }
+details.errors pre {
+  white-space: pre-wrap; font-family: var(--font-mono); font-size: 0.72rem;
+  background: #fdeceb; padding: 10px; border-radius: 4px; margin-top: 8px;
+}
+.scan-link { text-decoration: none; display: inline-flex; }
+
+/* ---------- links out to Gmail ----------
+   Quiet until you go looking for them: the date reads as a date, and the arrow
+   only firms up on hover so a table of 359 rows isn't a field of blue links. */
+.mail-link {
+  color: inherit; text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: color 0.12s, border-color 0.12s;
+}
+.mail-link:hover { color: var(--blue); border-bottom-color: currentColor; }
+.mail-ic { font-size: 0.85em; opacity: 0.35; margin-left: 3px; transition: opacity 0.12s; }
+.mail-link:hover .mail-ic { opacity: 1; }
+.ev-subject .mail-link:hover { color: var(--blue); }
+
+.err-toast {
+  position: fixed; bottom: 20px; right: 20px; z-index: 50;
+  background: var(--ink); color: #fff;
+  padding: 11px 16px; border-radius: 5px; font-size: 0.84rem;
+  max-width: 380px; box-shadow: 0 10px 30px -12px rgba(14, 27, 51, 0.6);
+}
+
+@media (max-width: 640px) {
+  .topbar-inner { gap: 12px; }
+  .brand-sub { display: none; }
+  .wrap { padding: 20px 14px 48px; }
+  td.role { max-width: 180px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+}

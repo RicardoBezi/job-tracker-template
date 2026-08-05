@@ -1,0 +1,16 @@
+node_modules/
+dashboard/node_modules/
+dashboard/dist/
+
+# Plaintext credentials — never commit these.
+secrets.json
+.env
+.env.*
+!.env.example
+
+findings*.json
+*.log
+.mcp.json
+
+# Note: dashboard/public/secrets.enc.json IS committed on purpose. It is the
+# encrypted blob the dashboard downloads and decrypts in your browser.

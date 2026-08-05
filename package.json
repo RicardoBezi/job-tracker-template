@@ -1,0 +1,12 @@
+{
+  "name": "job-tracker",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=20" },
+  "scripts": { "test": "vitest run" },
+  "dependencies": {
+    "@neondatabase/serverless": "^1.0.0",
+    "zod": "^4.0.0"
+  },
+  "devDependencies": { "vitest": "^3.0.0" }
+}
