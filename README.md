@@ -4,6 +4,8 @@ A private, cloud-hosted job application tracker with a Japanese editorial interf
 
 GCN reads findings prepared by a Claude Code Gmail routine, validates them in deterministic application code, and stores the accepted changes in Neon Postgres. The browser talks only to a same-origin API; database credentials never reach the frontend.
 
+GCN covers **The Golden Road**. The acronym is intentionally left unexpanded in public-facing copy.
+
 ```text
 Gmail → Claude cloud routine → tracker CLI → hosted API → Neon Postgres
                                               ↑

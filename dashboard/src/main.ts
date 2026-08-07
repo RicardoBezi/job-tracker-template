@@ -13,7 +13,7 @@ function loginView(message = "") {
         <div class="poster-index">転職活動記録 <span>/ PRIVATE ARCHIVE</span></div>
         <div class="login-grid">
           <div>
-            <p class="edition">GOLDEN CAREER NETWORK — 2026</p>
+            <p class="edition">THE GOLDEN ROAD — 2026</p>
             <h1 id="login-title">GCN</h1>
             <p class="jp-title" lang="ja">「ゴールデン・ロード」は続く。</p>
             <p class="login-copy">Your career,<br />in motion.</p>
@@ -61,7 +61,7 @@ async function appView() {
       </div>
       <header class="campaign-head">
         <div class="identity">
-          <p class="edition">GOLDEN CAREER NETWORK</p>
+          <p class="edition">THE GOLDEN ROAD</p>
           <h1>GCN</h1>
           <p lang="ja" class="campaign-line">「ゴールデン・ロード」は続く。</p>
           <p class="english-line">YOUR CAREER, IN MOTION.</p>
