@@ -44,6 +44,10 @@ let applications: Application[] = [];
 let activeFilter = "all";
 let query = "";
 
+const STATUS_WEIGHT: Record<string, number> = {
+  applied: 1, assessment: 2, interview: 3, "next-phase": 4, offer: 5,
+};
+
 const esc = (value: unknown) => String(value ?? "").replace(/[&<>"']/g, (char) => ({
   "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#039;",
 }[char]!));
@@ -64,6 +68,46 @@ function updateMetrics() {
   set("metric-all", applications.length);
   set("metric-interview", applications.filter((app) => app.status === "interview").length);
   set("metric-offer", applications.filter((app) => app.status === "offer").length);
+
+  const featured = featuredApplication();
+  if (!featured) return;
+  const recordNumber = applications.indexOf(featured) + 1;
+  const featuredStatus = bucket(featured) as keyof typeof LABELS;
+  const record = document.getElementById("hero-record");
+  const company = document.getElementById("hero-company");
+  const role = document.getElementById("hero-role");
+  const stage = document.getElementById("hero-stage");
+  if (record) record.textContent = `NO. ${String(recordNumber).padStart(3, "0")}`;
+  if (company) company.textContent = featured.company;
+  if (role) role.textContent = featured.role ?? "ROLE UNSET / 役職未設定";
+  if (stage) stage.textContent = `${LABELS[featuredStatus].ja} / ${LABELS[featuredStatus].en}`;
+  setSignal(featuredStatus);
+}
+
+function featuredApplication() {
+  return [...applications].sort((a, b) => {
+    const stageDelta = (STATUS_WEIGHT[b.status] ?? 0) - (STATUS_WEIGHT[a.status] ?? 0);
+    if (stageDelta) return stageDelta;
+    return new Date(b.last_activity_at ?? b.applied_at ?? 0).getTime() - new Date(a.last_activity_at ?? a.applied_at ?? 0).getTime();
+  })[0] ?? null;
+}
+
+function currentSignal() {
+  if (activeFilter !== "all") return activeFilter;
+  const featured = featuredApplication();
+  return featured ? bucket(featured) : "applied";
+}
+
+function setSignal(status: string) {
+  document.documentElement.dataset.signal = status;
+}
+
+function syncPipeline(el: HTMLElement) {
+  el.querySelectorAll<HTMLButtonElement>("[data-pipeline]").forEach((button) => {
+    const selected = activeFilter === button.dataset.pipeline;
+    button.classList.toggle("is-active", selected);
+    button.setAttribute("aria-pressed", String(selected));
+  });
 }
 
 function statusMark(app: Application) {
@@ -89,7 +133,7 @@ function listMarkup(rows: Application[]) {
         <span>DATE</span><span>COMPANY / ROLE</span><span>STATUS</span><span>LAST ACTIVITY</span><span></span>
       </div>
       ${rows.map((app, index) => `
-        <button class="application-row${app.ghosted ? " is-quiet" : ""}" data-id="${esc(app.id)}" role="row">
+        <button class="application-row${app.ghosted ? " is-quiet" : ""}" data-id="${esc(app.id)}" data-status="${esc(bucket(app))}" data-record="${String(index + 1).padStart(2, "0")}" role="row">
           <span class="row-index"><b>${String(index + 1).padStart(2, "0")}</b>${date(app.applied_at)}</span>
           <span class="app-name"><strong>${esc(app.company)}</strong><small>${esc(app.role ?? "役職未設定 / ROLE UNSET")}</small></span>
           ${statusMark(app)}
@@ -105,12 +149,15 @@ function drawList(el: HTMLElement) {
   if (list) list.innerHTML = listMarkup(rows);
   const count = el.querySelector("#shown-count");
   if (count) count.textContent = `${String(rows.length).padStart(2, "0")} / ${String(applications.length).padStart(2, "0")}`;
+  syncPipeline(el);
   wireRows(el);
 }
 
 function wireRows(el: HTMLElement) {
   el.querySelectorAll<HTMLButtonElement>(".application-row").forEach((row) => {
     row.addEventListener("click", () => openDetails(el, row.dataset.id!));
+    row.addEventListener("pointerenter", () => setSignal(row.dataset.status ?? currentSignal()));
+    row.addEventListener("pointerleave", () => setSignal(currentSignal()));
   });
 }
 
@@ -134,7 +181,7 @@ export async function renderApps(el: HTMLElement) {
       </header>
       <div class="pipeline-track">
         ${(["applied", "assessment", "interview", "next-phase", "offer"] as Status[]).map((status, index) => `
-          <button data-pipeline="${status}" class="stage stage-${status}">
+          <button data-pipeline="${status}" data-route="${String(index + 1).padStart(2, "0")}" class="stage stage-${status}" aria-pressed="false">
             <span>${String(index + 1).padStart(2, "0")}</span>
             <i></i><strong>${String(counts[status]).padStart(2, "0")}</strong>
             <b lang="ja">${LABELS[status].ja}</b><small>${LABELS[status].en}</small>
@@ -167,15 +214,21 @@ export async function renderApps(el: HTMLElement) {
   });
   el.querySelector<HTMLSelectElement>("#status-filter")!.addEventListener("change", (event) => {
     activeFilter = (event.target as HTMLSelectElement).value;
+    setSignal(currentSignal());
     drawList(el);
   });
   el.querySelectorAll<HTMLButtonElement>("[data-pipeline]").forEach((button) => button.addEventListener("click", () => {
     activeFilter = activeFilter === button.dataset.pipeline ? "all" : button.dataset.pipeline!;
+    setSignal(currentSignal());
     const select = el.querySelector<HTMLSelectElement>("#status-filter")!;
     select.value = activeFilter;
     drawList(el);
     el.querySelector(".records-section")?.scrollIntoView({ behavior: "smooth" });
   }));
+  el.querySelectorAll<HTMLButtonElement>("[data-pipeline]").forEach((button) => {
+    button.addEventListener("pointerenter", () => setSignal(button.dataset.pipeline ?? currentSignal()));
+    button.addEventListener("pointerleave", () => setSignal(currentSignal()));
+  });
   el.querySelector("#add-application")!.addEventListener("click", () => openEditor(el));
   wireRows(el);
   drawList(el);

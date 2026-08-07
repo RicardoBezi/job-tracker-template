@@ -7,14 +7,16 @@ const esc = (value: string) => value.replace(/[&<>"']/g, (char) => ({
 }[char]!));
 
 function loginView(message = "") {
+  document.documentElement.dataset.signal = "applied";
   root.innerHTML = `
     <section class="login-stage">
       <div class="login-poster" aria-labelledby="login-title">
+        <div class="poster-atmosphere" aria-hidden="true"><i></i><i></i><b>道</b></div>
         <div class="poster-index">転職活動記録 <span>/ PRIVATE ARCHIVE</span></div>
         <div class="login-grid">
           <div>
             <p class="edition">THE GOLDEN ROAD — 2026</p>
-            <h1 id="login-title">GCN</h1>
+            <h1 id="login-title" data-text="GCN">GCN</h1>
             <p class="jp-title" lang="ja">「ゴールデン・ロード」は続く。</p>
             <p class="login-copy">Your career,<br />in motion.</p>
           </div>
@@ -53,26 +55,40 @@ function loginView(message = "") {
 }
 
 async function appView() {
+  document.documentElement.dataset.signal = "applied";
   root.innerHTML = `
     <div class="site-shell">
       <div class="utility-bar">
         <span lang="ja">転職活動記録</span><span>/ PRIVATE ARCHIVE / ${new Date().getFullYear()}</span>
         <span class="online"><i></i> ONLINE</span>
       </div>
+      <div class="signal-ticker" aria-label="The Golden Road campaign message">
+        <div>
+          <span>THE GOLDEN ROAD</span><i>◆</i><span lang="ja">ゴールデン・ロードは続く</span><i>◆</i><span>LIVE PROGRESS ARCHIVE</span><i>◆</i>
+          <span aria-hidden="true">THE GOLDEN ROAD</span><i aria-hidden="true">◆</i><span lang="ja" aria-hidden="true">ゴールデン・ロードは続く</span><i aria-hidden="true">◆</i><span aria-hidden="true">LIVE PROGRESS ARCHIVE</span><i aria-hidden="true">◆</i>
+        </div>
+      </div>
       <header class="campaign-head">
+        <div class="campaign-atmosphere" aria-hidden="true"><b>道</b><i></i><i></i><i></i></div>
         <div class="identity">
-          <p class="edition">THE GOLDEN ROAD</p>
-          <h1>GCN</h1>
+          <p class="edition">THE GOLDEN ROAD / CURRENT SIGNAL</p>
+          <h1 data-text="GCN">GCN</h1>
           <p lang="ja" class="campaign-line">「ゴールデン・ロード」は続く。</p>
           <p class="english-line">YOUR CAREER, IN MOTION.</p>
         </div>
         <p class="vertical-copy" lang="ja" aria-hidden="true">進捗記録</p>
+        <section class="hero-focus" aria-label="Featured active application">
+          <div class="hero-focus-top"><span>注目記録 / FEATURED RECORD</span><b id="hero-record">NO. —</b></div>
+          <strong id="hero-company">LOADING SIGNAL</strong>
+          <p id="hero-role">Retrieving the latest active route.</p>
+          <footer><span id="hero-stage">CURRENT STAGE —</span><i></i><small>LIVE</small></footer>
+        </section>
         <div class="hero-stats" aria-label="Application summary">
           <div><strong id="metric-all">—</strong><span>APPLICATIONS</span><small lang="ja">応募総数</small></div>
           <div><strong id="metric-interview">—</strong><span>INTERVIEWS</span><small lang="ja">面接</small></div>
           <div><strong id="metric-offer">—</strong><span>OFFERS</span><small lang="ja">内定</small></div>
         </div>
-        <div class="road" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+        <div class="road" aria-hidden="true"><span></span><i></i><i></i><i></i><i></i><i></i></div>
       </header>
       <nav class="primary-nav" aria-label="Main navigation">
         <button class="active" data-tab="apps"><b>01</b><span lang="ja">応募一覧</span><small>APPLICATIONS</small></button>
