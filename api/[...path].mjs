@@ -34,7 +34,8 @@ const applicationInput = z.object({
   notes: z.string().max(5000).nullable().optional(),
 }).strict();
 
-const applicationPatch = applicationInput.partial().extend({
+export const applicationPatch = applicationInput.omit({ status: true }).partial().extend({
+  status: z.enum(STATUSES).optional(),
   manual_override: z.boolean().optional(),
 }).strict();
 
