@@ -82,7 +82,8 @@ Configure these production environment variables:
 
 | Variable | Purpose |
 |---|---|
-| `DATABASE_URL` | Limited Neon role; server-side only |
+| `DATABASE_URL` | Neon connection supplied by the integration; server-side only |
+| `GCN_DATABASE_URL` | Preferred restricted application-role URL used at runtime |
 | `AUTH_PASSWORD_HASH` | Output from `npm run password` |
 | `SESSION_SECRET` | Random session-signing secret |
 | `SCANNER_TOKEN` | Independent random scanner credential |
@@ -153,7 +154,7 @@ Scanner-token routes live under `/api/scanner/` and correspond one-to-one with t
 
 ## Security notes
 
-- `DATABASE_URL`, `SESSION_SECRET`, and `SCANNER_TOKEN` are server-only values.
+- `DATABASE_URL`, `GCN_DATABASE_URL`, `SESSION_SECRET`, and `SCANNER_TOKEN` are server-only values.
 - Login sessions expire after 12 hours and use `Secure`, `HttpOnly`, and `SameSite=Lax` cookies.
 - State-changing browser requests are checked for same-origin access.
 - Login attempts receive a short in-process rate limit; production deployments should also enable platform-level rate limiting or firewall rules.
