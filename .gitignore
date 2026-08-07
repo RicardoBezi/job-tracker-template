@@ -4,8 +4,7 @@ dashboard/dist/
 
 # Plaintext credentials — never commit these.
 secrets.json
-.env
-.env.*
+.env*
 !.env.example
 
 findings*.json
@@ -14,3 +13,5 @@ findings*.json
 
 # Vercel project metadata and local environment files.
 .vercel/
+
+.env*

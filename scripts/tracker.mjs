@@ -12,7 +12,12 @@ function loadEnv() {
     try {
       for (const line of readFileSync(new URL(file, import.meta.url), "utf8").split(/\r?\n/)) {
         const match = line.match(/^([A-Z0-9_]+)=(.*)$/);
-        if (match && !process.env[match[1]]) process.env[match[1]] = match[2].trim();
+        if (match && !process.env[match[1]]) {
+          const raw = match[2].trim();
+          process.env[match[1]] = raw.length >= 2 && ((raw.startsWith('"') && raw.endsWith('"')) || (raw.startsWith("'") && raw.endsWith("'")))
+            ? raw.slice(1, -1)
+            : raw;
+        }
       }
     } catch {}
   }
