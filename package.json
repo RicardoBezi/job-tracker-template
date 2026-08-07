@@ -3,10 +3,16 @@
   "private": true,
   "type": "module",
   "engines": { "node": ">=20" },
-  "scripts": { "test": "vitest run" },
+  "scripts": {
+    "test": "vitest run",
+    "build": "npm --prefix dashboard run build",
+    "dev": "npx vercel dev",
+    "password": "node scripts/hash-password.mjs"
+  },
   "dependencies": {
     "@neondatabase/serverless": "^1.0.0",
     "zod": "^4.0.0"
   },
+  "overrides": { "esbuild": "^0.28.1" },
   "devDependencies": { "vitest": "^3.0.0" }
 }

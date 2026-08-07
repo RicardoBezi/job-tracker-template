@@ -51,7 +51,14 @@ create table application_events (
   created_at       timestamptz not null default now()
 );
 
+-- Read-path indexes used by the hosted API and dashboard.
+create index if not exists applications_match_idx on applications (company_norm, role_norm);
+create index if not exists applications_activity_idx on applications (last_activity_at desc);
+create index if not exists application_events_timeline_idx on application_events (application_id, occurred_at desc);
+create index if not exists scan_runs_started_idx on scan_runs (started_at desc);
+
 -- Run once as owner after tables exist (fill in a generated password, do not commit it):
 -- create role app_rw with login password '<GENERATED>';
 -- grant usage on schema public to app_rw;
 -- grant select, insert, update, delete on applications, application_events, scan_runs to app_rw;
+-- Keep this role server-side in Vercel. Never expose its URL to the dashboard.

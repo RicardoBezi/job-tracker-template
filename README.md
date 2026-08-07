@@ -1,196 +1,164 @@
-# job-tracker
+# GCN — 「ゴールデン・ロード」は続く。
 
-A job application tracker that reads your own inbox and keeps itself up to date.
+A private, cloud-hosted job application tracker with a Japanese editorial interface.
 
-A [Claude Code routine](https://claude.com/claude-code) reads your Gmail once a day, decides which
-messages are about *your* applications, and reports what it found. A small CLI validates that report
-and writes it to Postgres. A static dashboard on GitHub Pages shows the pipeline and lets you edit it
-by hand. Every row links back to the email that produced it.
+GCN reads findings prepared by a Claude Code Gmail routine, validates them in deterministic application code, and stores the accepted changes in Neon Postgres. The browser talks only to a same-origin API; database credentials never reach the frontend.
 
-```
-Gmail ──▶ Claude routine ──▶ findings.json ──▶ tracker CLI ──▶ Postgres ──▶ dashboard
-          (judgment)         (a plain file)    (validation,     (Neon)      (GitHub Pages)
-                                                the only writer)
+```text
+Gmail → Claude cloud routine → tracker CLI → hosted API → Neon Postgres
+                                              ↑
+                                  authenticated GCN dashboard
 ```
 
-The design rule the whole thing hangs on: **the model never touches the database.** It fills in a JSON
-file. A deterministic CLI decides what that file is allowed to do — schema-checked, forward-only status
-transitions, idempotent on Gmail message ID. If the model hallucinates a company or invents a status,
-validation drops it and logs the rejection instead of corrupting a row.
+## Design rules
 
----
+- The model never writes to the database.
+- Every finding is checked with a strict Zod schema.
+- Gmail message IDs make ingestion idempotent.
+- Pipeline statuses move forward and terminal outcomes remain terminal.
+- Manual status changes stop automatic status changes until re-enabled.
+- “Gone quiet” is derived after 180 silent days and is never stored as a status.
+- Browser sessions and scanner access use separate credentials.
 
-## What you'll need
+## Stack
 
-| | |
-|---|---|
-| **Claude Code** | With a plan that includes cloud routines, and the Gmail connector |
-| **Postgres over HTTPS** | [Neon](https://neon.tech) free tier. Must support SQL-over-HTTPS — the browser talks to it directly |
-| **GitHub** | For Pages. A **private** repo needs GitHub Pro; a public repo works on Free |
-| **Node 20+** | For the CLI and the build |
+- Vite and TypeScript frontend
+- Vercel Functions API
+- Neon serverless Postgres driver
+- Signed, secure, HTTP-only owner session
+- Bearer-token authentication for the scanner
+- Vitest for rule and security tests
 
-Budget about 30 minutes.
+## First deployment
 
----
+### 1. Install and test
 
-## Setup
-
-### 1. Get the code
-
-Click **Use this template** (or fork), then:
+Node 22 is recommended.
 
 ```bash
-git clone https://github.com/YOU/job-tracker && cd job-tracker
-npm install
-cd dashboard && npm install && cd ..
+npm ci
+npm --prefix dashboard ci
+npm test
+npm run build
 ```
 
 ### 2. Create the database
 
-Make a Neon project, then apply the schema:
+Create a Neon project and apply the schema as the owner:
 
 ```bash
-psql -X "postgresql://...your-neon-connection-string..." -f schema.sql
+psql -X "postgresql://OWNER_CONNECTION" -f schema.sql
 ```
 
-The `-X` matters — it skips `~/.psqlrc`. If yours happens to set `AUTOCOMMIT off`, the DDL silently
-rolls back and you get an empty database with no error.
+Create the limited application role shown at the bottom of `schema.sql`, then use that role's connection string for `DATABASE_URL`. Do not use the Neon owner role in the application.
 
-Three tables get created:
-
-- **`applications`** — one row per application. Company, role, status, dates.
-- **`application_events`** — every observation, with `gmail_message_id UNIQUE`. This is the idempotency
-  key: rescanning the same email can never double-count.
-- **`scan_runs`** — one row per scan, with an `errors` JSONB column. Failures land here, not in a log
-  file you'll never read.
-
-Optionally create the limited role at the bottom of `schema.sql`. It has table grants only, no DDL.
-Use that connection string rather than the owner's — it's the one that ends up in your browser.
-
-### 3. Encrypt your credentials
-
-The dashboard is a static site with no backend, so the database URL has to reach the browser somehow.
-It ships as an AES-GCM blob that only decrypts with your password.
+For an existing installation, apply:
 
 ```bash
-cp secrets.example.json secrets.json
-# edit secrets.json: put in your connection string
-# leave routine_url out for now — you don't have one yet
-
-TRACKER_PASSWORD='your-passphrase' node scripts/encrypt.mjs secrets.json dashboard/public/secrets.enc.json
+psql -X "postgresql://OWNER_CONNECTION" -f migrations/002_hosted_api.sql
 ```
 
-> **Pick a real passphrase.** Four random words, not a word or a PIN. `secrets.enc.json` is served
-> publicly by GitHub Pages *whether or not your repo is private* — Pages publishes what it builds, and
-> access-controlled Pages requires GitHub Enterprise. So anyone with your site URL can download the
-> blob and attack it offline, with no rate limit. The 600,000 PBKDF2 iterations make each guess
-> expensive; they cannot save a four-digit keyspace. This is the one step where being lazy actually
-> costs you something.
+### 3. Generate secrets
 
-`secrets.json` is gitignored. `secrets.enc.json` is committed on purpose.
-
-Also write a `.env` for local CLI use:
+Generate the login password hash:
 
 ```bash
-cp .env.example .env    # then paste the same connection string
+npm run password -- "a-long-owner-password"
 ```
 
-### 4. Deploy the dashboard
+Generate independent random values for the session and scanner:
 
-Push, then in **Settings → Pages** set the source to **GitHub Actions**. The included workflow builds
-`dashboard/` and deploys on every push to `main`.
+```bash
+node -e "console.log(require('node:crypto').randomBytes(32).toString('base64url'))"
+```
 
-Your site lands at `https://YOU.github.io/job-tracker/`. Open it, enter your passphrase, and you should
-get an empty table.
+Run that command twice. Never reuse the owner password, session secret, or scanner token.
 
-### 5. Set up the routine
+### 4. Deploy to Vercel
 
-In Claude Code:
+Import the repository as a Vercel project and keep the repository root as the project root. `vercel.json` builds `dashboard/` and deploys `api/` as same-origin functions.
 
-1. Run `/mcp` and authenticate the **Gmail** connector. Connecting it on claude.ai is *not* enough —
-   routines only see connectors authenticated here.
-2. Create a cloud environment for the routine with **custom network access**, allowing your database
-   host (e.g. `api.REGION.aws.neon.tech`) plus the default package managers. The default "Trusted"
-   policy blocks Neon and the routine will fail with a 403.
-3. Create a routine that points at your repo, scheduled daily, with this prompt:
+Configure these production environment variables:
 
-   > Follow the instructions in `runbook.md` exactly. Your database connection string is
-   > `postgresql://...`
-
-4. Restrict its tools to `Bash(node scripts/tracker.mjs *)`. This is what stops the routine from
-   running arbitrary SQL — the CLI becomes the only door.
-
-Then put the routine's URL into `secrets.json` as `routine_url`, re-run the encrypt command from step 3,
-and push. A **Run a scan now** button appears on the dashboard.
-
----
-
-## The tools the routine gets
-
-`runbook.md` is the routine's contract. It can only call these:
-
-| Command | Does |
+| Variable | Purpose |
 |---|---|
-| `scan-state` | When did the last successful scan finish? |
-| `list-apps --active` | Open applications, minus ones silent past the ghost threshold |
-| `find --company X [--role Y]` | Search everything, including closed and ghosted |
-| `begin-run --trigger cron\|manual` | Open a scan run |
-| `upsert --run ID --file findings.json` | Apply findings. Validates, dedupes, writes |
-| `log-error --run ID --message ...` | Record a failure |
-| `end-run --run ID` | Close the run, compute success/partial/error |
+| `DATABASE_URL` | Limited Neon role; server-side only |
+| `AUTH_PASSWORD_HASH` | Output from `npm run password` |
+| `SESSION_SECRET` | Random session-signing secret |
+| `SCANNER_TOKEN` | Independent random scanner credential |
+| `ROUTINE_URL` | Optional link displayed in scan history |
 
-There is no delete and no direct status-set, by design. `upsert` is where every rule lives:
+Pushes to the connected production branch deploy automatically. Pull requests run tests and a dashboard build through `.github/workflows/ci.yml`.
 
-- Findings are parsed with a strict Zod schema. Unknown fields, bad enums, malformed dates → rejected
-  and logged, never written.
-- Status only moves forward. An "application received" email arriving after an interview invite cannot
-  demote the row. `rejected`/`withdrawn` are reachable from anywhere and stick.
-- Rows you edited by hand get `manual_override`, and the scanner stops changing their status. It still
-  records that the email arrived.
+### 5. Configure the Claude routine
 
-## "Ghosted" is derived, not stored
+Give the cloud environment only:
 
-An application with no word for 180 days shows as *gone quiet*. That is computed at read time from
-`last_activity_at` — it is never written to the `status` column. Three reasons this is better:
+```text
+TRACKER_API_URL=https://your-project.vercel.app
+SCANNER_TOKEN=<the scanner token configured in Vercel>
+```
 
-- You keep the information that it died at **interview** rather than at **applied**.
-- A reply un-ghosts it automatically. No cleanup job.
-- Changing the threshold is a one-line edit, not a migration.
+Connect Gmail, point the routine at this repository, restrict it to `Bash(node scripts/tracker.mjs *)`, and instruct it to follow `runbook.md` exactly. The routine does not need a database connection string.
 
-`GHOST_DAYS` lives in `scripts/lib/core.mjs` and is mirrored in `dashboard/src/apps-view.ts`.
+### 6. Retire an older browser-direct deployment
+
+If this repository previously served `secrets.enc.json`, complete all of these steps after the hosted API works:
+
+1. Rotate the old Neon role password.
+2. Confirm the replacement URL exists only in Vercel environment variables.
+3. Disable the previous GitHub Pages deployment.
+4. Revoke the old role if it is no longer needed.
+5. Redeploy and confirm no encrypted-secret asset is present.
+
+Deleting the old file alone is insufficient because deployed artifacts and Git history may retain it.
 
 ## Local development
 
-```bash
-npm test                          # tests over the pure logic in scripts/lib/core.mjs
-cd dashboard && npm run dev
+Copy `.env.example` to `.env.local`, fill in test credentials, and use a non-production Neon branch.
 
-node scripts/tracker.mjs list-apps --active
+```bash
+npm run dev
+```
+
+This invokes the Vercel development server so the Vite frontend and `/api` functions share an origin. A globally installed Vercel CLI avoids `npx` downloading it on first use.
+
+Useful checks:
+
+```bash
+npm test
+npm run build
 node scripts/tracker.mjs upsert --run <id> --file findings.json --dry-run
 ```
 
-`--dry-run` prints what `upsert` would do and writes nothing. Use it when changing matching logic.
+The dry run performs local schema validation only. It does not query the hosted database or test duplicate detection.
 
-`scripts/migrate.mjs --file data.json` bulk-imports applications if you're coming from another tracker.
+## API boundaries
 
-## Customizing
+Owner-session routes:
 
-| Want to | Edit |
-|---|---|
-| Change the ghost threshold | `GHOST_DAYS` in `scripts/lib/core.mjs` **and** `dashboard/src/apps-view.ts` |
-| Add a pipeline stage | The `job_status` enum in `schema.sql`, `STATUSES` + `RANK` in `core.mjs`, `STATUSES` + `--s-*` colors in the dashboard |
-| Use a non-default Gmail account | `GMAIL_ACCOUNT` in `dashboard/src/apps-view.ts` — it's the `u/N` index of the signed-in account |
-| Change what counts as a job email | The search queries in `runbook.md` |
+```text
+POST   /api/auth/login
+POST   /api/auth/logout
+GET    /api/auth/session
+GET    /api/applications
+POST   /api/applications
+PATCH  /api/applications/:id
+DELETE /api/applications/:id
+GET    /api/applications/:id/events
+GET    /api/scan-runs
+```
 
-## Security model, stated plainly
+Scanner-token routes live under `/api/scanner/` and correspond one-to-one with the commands documented in `runbook.md`.
 
-- The dashboard is static. Your browser talks straight to Postgres over HTTPS.
-- Your connection string is therefore *in the browser*, decrypted from the blob with your passphrase,
-  held in memory and `sessionStorage`. Anyone who learns the passphrase has your database.
-- Use the limited role from `schema.sql`, not the owner role.
-- **The password is the whole security boundary.** Repo visibility is not — see the warning in step 3.
-- This suits a personal tracker. It is not a multi-user app and shouldn't be turned into one without a
-  real backend.
+## Security notes
+
+- `DATABASE_URL`, `SESSION_SECRET`, and `SCANNER_TOKEN` are server-only values.
+- Login sessions expire after 12 hours and use `Secure`, `HttpOnly`, and `SameSite=Lax` cookies.
+- State-changing browser requests are checked for same-origin access.
+- Login attempts receive a short in-process rate limit; production deployments should also enable platform-level rate limiting or firewall rules.
+- Security headers, including a restrictive Content Security Policy, are set in `vercel.json`.
+- This remains a personal single-owner tracker. Add a real identity provider and row-level authorization before supporting multiple users.
 
 ## License
 
