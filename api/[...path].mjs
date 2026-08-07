@@ -44,7 +44,10 @@ function send(res, status, body, extraHeaders = {}) {
 }
 
 function pathParts(req) {
-  return new URL(req.url, "http://gcn.local").pathname.replace(/^\/api\/?/, "").split("/").filter(Boolean);
+  const url = new URL(req.url, "http://gcn.local");
+  const rewrittenPath = url.searchParams.get("__path");
+  const path = rewrittenPath ?? url.pathname.replace(/^\/api\/?/, "");
+  return path.split("/").filter(Boolean);
 }
 
 async function body(req) {

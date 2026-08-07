@@ -52,7 +52,7 @@ describe("hosted authentication", () => {
     const cookie = loginResponse.headers.get("set-cookie");
     expect(cookie).toContain("gcn_session=");
 
-    const sessionResponse = await apiHandler.fetch(new Request("https://gcn.example/api/auth/session", {
+    const sessionResponse = await apiHandler.fetch(new Request("https://gcn.example/api/router?__path=auth/session", {
       headers: { Cookie: cookie },
     }));
     expect(sessionResponse.status).toBe(200);

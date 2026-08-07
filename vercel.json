@@ -4,6 +4,9 @@
   "devCommand": "npm --prefix dashboard run dev",
   "outputDirectory": "dashboard/dist",
   "framework": "vite",
+  "rewrites": [
+    { "source": "/api/:path*", "destination": "/api/router?__path=:path*" }
+  ],
   "headers": [
     {
       "source": "/(.*)",
