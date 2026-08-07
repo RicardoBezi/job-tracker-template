@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { normalize, validateFindings, planAction, advanceStatus, computeVerdict, isGhosted, daysSinceActivity, GHOST_DAYS } from "../scripts/lib/core.mjs";
+import { normalize, validateFindings, planAction, advanceStatus, statusForFinding, computeVerdict, isGhosted, daysSinceActivity, GHOST_DAYS } from "../scripts/lib/core.mjs";
 
 const good = {
   gmail_message_id: "m1",
@@ -12,7 +12,7 @@ const good = {
   confidence: 0.9,
 };
 
-const app = (o = {}) => ({ id: "a1", company_norm: "stripe", role_norm: "swe intern", status: "applied", manual_override: false, ...o });
+const app = (o = {}) => ({ id: "a1", company_norm: "stripe", role_norm: "swe intern", status: "applied", manual_override: false, last_activity_at: "2026-08-01", ...o });
 const f = (o = {}) => ({ ...good, ...o });
 
 describe("normalize", () => {
@@ -56,6 +56,15 @@ describe("advanceStatus", () => {
   it("terminal is sticky", () => expect(advanceStatus("rejected", "interview")).toBe("rejected"));
 });
 
+describe("statusForFinding", () => {
+  it("does not let older mail overwrite newer state", () =>
+    expect(statusForFinding("interview", "rejected", "2026-08-05", "2026-08-04")).toBe("interview"));
+  it("reopens a terminal application on a later explicit progression", () =>
+    expect(statusForFinding("rejected", "next-phase", "2026-08-06", "2026-08-07")).toBe("next-phase"));
+  it("does not guess that same-day mail came after a terminal event", () =>
+    expect(statusForFinding("rejected", "next-phase", "2026-08-07", "2026-08-07")).toBe("rejected"));
+});
+
 describe("planAction", () => {
   it("skips known message ids", () =>
     expect(planAction(f(), [app()], new Set(["m1"])).outcome).toBe("skipped_duplicate"));
@@ -78,6 +87,14 @@ describe("planAction", () => {
   it("manual_override blocks updates", () => {
     const a = planAction(f({ detected_status: "offer" }), [app({ manual_override: true })], new Set());
     expect(a).toMatchObject({ outcome: "skipped_override", applicationId: "a1" });
+  });
+  it("reopens a rejected match when a later email advances it", () => {
+    const a = planAction(
+      f({ detected_status: "next-phase", email_date: "2026-08-07" }),
+      [app({ status: "rejected", last_activity_at: "2026-08-06" })],
+      new Set(),
+    );
+    expect(a).toMatchObject({ outcome: "updated", oldStatus: "rejected", newStatus: "next-phase", statusChanged: true });
   });
   it("no demotion → updated with statusChanged false", () => {
     const a = planAction(f({ detected_status: "applied" }), [app({ status: "interview" })], new Set());

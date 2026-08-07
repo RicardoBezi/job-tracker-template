@@ -278,7 +278,7 @@ async function scanner(req, res, parts, url) {
     const raw = await body(req);
     const findings = Array.isArray(raw) ? raw : raw.findings;
     const { valid, invalid } = validateFindings(findings);
-    const apps = await sql`select id, company_norm, role_norm, status, manual_override from applications`;
+    const apps = await sql`select id, company_norm, role_norm, status, manual_override, last_activity_at from applications`;
     const ids = valid.map((finding) => finding.gmail_message_id);
     const knownRows = ids.length ? await sql`select gmail_message_id from application_events where gmail_message_id = any(${ids})` : [];
     const known = new Set(knownRows.map((row) => row.gmail_message_id));
@@ -295,6 +295,10 @@ async function scanner(req, res, parts, url) {
       await logError(`invalid finding: ${invalidFinding.error}`, JSON.stringify(invalidFinding.finding).slice(0, 500));
     }
 
+    // Gmail search order is not a business rule. Stable chronological handling
+    // prevents an older rejection from overwriting a later reactivation.
+    valid.sort((a, b) => a.email_date.localeCompare(b.email_date));
+
     for (const finding of valid) {
       const planned = planAction(finding, apps, known);
       const result = { gmail_message_id: finding.gmail_message_id, company: finding.company, outcome: planned.outcome };
@@ -309,18 +313,23 @@ async function scanner(req, res, parts, url) {
               select id, ${id}, 'created', ${finding.detected_status}, ${finding.gmail_message_id}, ${finding.email_subject}, ${finding.email_from}, ${finding.email_date} from created returning application_id
             )
             select id from created`;
-          apps.push({ id: createdApp.id, company_norm: planned.company_norm, role_norm: planned.role_norm, status: finding.detected_status, manual_override: false });
+          apps.push({ id: createdApp.id, company_norm: planned.company_norm, role_norm: planned.role_norm, status: finding.detected_status, manual_override: false, last_activity_at: finding.email_date });
           created++;
         } else if (planned.outcome === "updated") {
           await sql`
             with updated as (
-              update applications set status = ${planned.newStatus}, last_activity_at = ${finding.email_date}, updated_at = now()
+              update applications set status = ${planned.newStatus},
+                last_activity_at = greatest(coalesce(last_activity_at, ${finding.email_date}::date), ${finding.email_date}::date),
+                updated_at = now()
               where id = ${planned.applicationId} returning id
             )
             insert into application_events (application_id, scan_run_id, event_type, old_status, new_status, gmail_message_id, email_subject, email_from, occurred_at)
             select id, ${id}, ${planned.statusChanged ? "status_change" : "email_detected"}, ${planned.oldStatus}, ${planned.statusChanged ? planned.newStatus : null}, ${finding.gmail_message_id}, ${finding.email_subject}, ${finding.email_from}, ${finding.email_date} from updated`;
           const matched = apps.find((app) => app.id === planned.applicationId);
           if (planned.statusChanged && matched) matched.status = planned.newStatus;
+          if (matched && (!matched.last_activity_at || new Date(finding.email_date) > new Date(matched.last_activity_at))) {
+            matched.last_activity_at = finding.email_date;
+          }
           updated++;
         } else if (planned.outcome === "skipped_override") {
           await sql`
