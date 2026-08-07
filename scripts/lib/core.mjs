@@ -56,6 +56,24 @@ export function advanceStatus(current, detected) {
   return RANK[detected] > RANK[current] ? detected : current;
 }
 
+export function statusForFinding(current, detected, lastActivityAt, emailDate) {
+  const currentTime = lastActivityAt ? new Date(lastActivityAt).getTime() : null;
+  const findingTime = new Date(`${emailDate}T00:00:00Z`).getTime();
+
+  // Historical mail can still be recorded in the timeline, but it must not
+  // rewrite the state established by a newer message.
+  if (currentTime !== null && findingTime < currentTime) return current;
+
+  // A clear later response can revive a closed application (for example, a
+  // requisition-error rejection followed by a reactivation). With date-only
+  // findings, require a strictly later day to avoid guessing within one day.
+  if (TERMINAL.includes(current) && !TERMINAL.includes(detected)) {
+    return currentTime === null || findingTime > currentTime ? detected : current;
+  }
+
+  return advanceStatus(current, detected);
+}
+
 export function planAction(finding, apps, knownMessageIds) {
   if (knownMessageIds.has(finding.gmail_message_id)) return { outcome: "skipped_duplicate" };
   const company_norm = normalize(finding.company);
@@ -69,7 +87,7 @@ export function planAction(finding, apps, knownMessageIds) {
   }
   if (!match) return { outcome: "created", company_norm, role_norm };
   if (match.manual_override) return { outcome: "skipped_override", applicationId: match.id };
-  const newStatus = advanceStatus(match.status, finding.detected_status);
+  const newStatus = statusForFinding(match.status, finding.detected_status, match.last_activity_at, finding.email_date);
   return { outcome: "updated", applicationId: match.id, oldStatus: match.status, newStatus, statusChanged: newStatus !== match.status };
 }
 
