@@ -1,5 +1,6 @@
 import { login, logout, session } from "./api";
 import { setEnvironmentStage, startEnvironment } from "./environment";
+import { setupWeather } from "./weather";
 import "./style.css";
 
 const root = document.getElementById("app")!;
@@ -61,6 +62,7 @@ function loginView(message = "") {
 async function appView() {
   setEnvironmentStage("applied");
   root.innerHTML = `
+    <div class="weather-layer" aria-hidden="true"></div>
     <div class="site-shell">
       <div class="utility-bar">
         <span lang="ja">転職活動記録</span><span>/ PRIVATE ARCHIVE / ${new Date().getFullYear()}</span>
@@ -70,6 +72,9 @@ async function appView() {
           <span id="environment-season">季節 / SEASON</span>
           <small id="environment-date">----.--.--</small>
         </div>
+        <button class="weather-toggle" id="weather-toggle" type="button" aria-pressed="false" title="Use approximate browser location for current weather. Coordinates are not stored.">
+          <i id="weather-mark">◎</i><span id="weather-label">天候 / AMBIENT</span><small id="weather-detail">ENABLE LOCAL WEATHER</small>
+        </button>
         <span class="online"><i></i> ONLINE</span>
       </div>
       <div class="signal-ticker" aria-label="The Golden Road campaign message">
@@ -103,35 +108,49 @@ async function appView() {
       </header>
       <nav class="primary-nav" aria-label="Main navigation">
         <button class="active" data-tab="apps"><b>01</b><span lang="ja">応募一覧</span><small>APPLICATIONS</small></button>
-        <button data-tab="history"><b>02</b><span lang="ja">実行履歴</span><small>SCAN HISTORY</small></button>
+        <button data-tab="map"><b>02</b><span lang="ja">黄金経路</span><small>ROAD MAP</small></button>
+        <button data-tab="history"><b>03</b><span lang="ja">実行履歴</span><small>SCAN HISTORY</small></button>
         <button class="sign-out" id="sign-out"><span lang="ja">退出</span><small>SIGN OUT</small></button>
       </nav>
       <main class="content-frame">
         <section id="tab-apps"></section>
+        <section id="tab-map" hidden></section>
         <section id="tab-history" hidden></section>
       </main>
       <footer class="site-foot"><span>GCN / PERSONAL CAREER ARCHIVE</span><span lang="ja">道は、まだ続いている。</span></footer>
     </div>`;
 
   startEnvironment();
+  setupWeather();
 
   const appsEl = root.querySelector<HTMLElement>("#tab-apps")!;
+  const mapEl = root.querySelector<HTMLElement>("#tab-map")!;
   const historyEl = root.querySelector<HTMLElement>("#tab-history")!;
   const { renderApps } = await import("./apps-view");
   await renderApps(appsEl);
 
+  const showTab = async (tab: string) => {
+    root.querySelectorAll("[data-tab]").forEach((item) => item.classList.toggle("active", (item as HTMLElement).dataset.tab === tab));
+    appsEl.hidden = tab !== "apps";
+    mapEl.hidden = tab !== "map";
+    historyEl.hidden = tab !== "history";
+    if (tab === "map" && mapEl.dataset.ready !== "true") {
+      mapEl.dataset.ready = "true";
+      const { renderMap } = await import("./map-view");
+      await renderMap(mapEl, async (id) => {
+        await showTab("apps");
+        appsEl.dispatchEvent(new CustomEvent("gcn:open-application", { detail: { id } }));
+      });
+    }
+    if (tab === "history" && historyEl.dataset.ready !== "true") {
+      historyEl.dataset.ready = "true";
+      const { renderHistory } = await import("./history-view");
+      await renderHistory(historyEl);
+    }
+  };
+
   root.querySelectorAll<HTMLButtonElement>("[data-tab]").forEach((button) => {
-    button.addEventListener("click", async () => {
-      root.querySelectorAll("[data-tab]").forEach((item) => item.classList.remove("active"));
-      button.classList.add("active");
-      const showApps = button.dataset.tab === "apps";
-      appsEl.hidden = !showApps;
-      historyEl.hidden = showApps;
-      if (!showApps) {
-        const { renderHistory } = await import("./history-view");
-        await renderHistory(historyEl);
-      }
-    });
+    button.addEventListener("click", () => void showTab(button.dataset.tab!));
   });
 
   root.querySelector("#sign-out")!.addEventListener("click", async () => {

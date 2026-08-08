@@ -164,6 +164,13 @@ function wireRows(el: HTMLElement) {
 }
 
 export async function renderApps(el: HTMLElement) {
+  if (el.dataset.dossierListener !== "true") {
+    el.dataset.dossierListener = "true";
+    el.addEventListener("gcn:open-application", (event) => {
+      const id = (event as CustomEvent<{ id: string }>).detail?.id;
+      if (id) openDetails(el, id);
+    });
+  }
   el.innerHTML = `<div class="section-loading"><i></i><span>応募情報を読み込み中 / LOADING APPLICATIONS</span></div>`;
   try {
     const result = await api<{ applications: Application[] }>("/applications");

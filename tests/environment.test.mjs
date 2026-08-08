@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { environmentFor, seasonFor } from "../dashboard/src/environment.ts";
 import { FESTIVALS, festivalFor, glyphFor } from "../dashboard/src/calendar.ts";
+import { classifyWeather } from "../dashboard/src/weather.ts";
 
 const at = (month, hour, minute = 0) => new Date(2026, month - 1, 8, hour, minute, 0);
 
@@ -83,5 +84,16 @@ describe("curated 2026 cultural calendar", () => {
     expect(festivalFor(on("2026-03-20"))).toBeNull();
     expect(festivalFor(on("2026-07-20"))).toBeNull();
     expect(festivalFor(on("2026-11-23"))).toBeNull();
+  });
+});
+
+describe("ambient weather classification", () => {
+  it("maps WMO conditions into visual atmosphere families", () => {
+    expect(classifyWeather(0)).toBe("clear");
+    expect(classifyWeather(3)).toBe("cloudy");
+    expect(classifyWeather(45)).toBe("fog");
+    expect(classifyWeather(61)).toBe("rain");
+    expect(classifyWeather(75)).toBe("snow");
+    expect(classifyWeather(95)).toBe("storm");
   });
 });

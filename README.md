@@ -21,6 +21,7 @@ Gmail → Codex scheduled task → tracker CLI → hosted API → Neon Postgres
 - Manual status changes stop automatic status changes until re-enabled.
 - “Gone quiet” is derived after 180 silent days and is never stored as a status.
 - Browser sessions and scanner access use separate credentials.
+- Live ambient weather is opt-in. The browser rounds location to two decimal places, sends it to Open-Meteo for current conditions, and never stores the coordinates.
 
 ## Stack
 
@@ -30,6 +31,7 @@ Gmail → Codex scheduled task → tracker CLI → hosted API → Neon Postgres
 - Signed, secure, HTTP-only owner session
 - Bearer-token authentication for the scanner
 - Vitest for rule and security tests
+- Optional Open-Meteo current conditions for the visual atmosphere
 
 ## First deployment
 
