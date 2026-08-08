@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { environmentFor, seasonFor } from "../dashboard/src/environment.ts";
 import { FESTIVALS, festivalFor, glyphFor } from "../dashboard/src/calendar.ts";
 import { classifyWeather } from "../dashboard/src/weather.ts";
+import { diffTransmissionSnapshots, snapshotFor } from "../dashboard/src/cinematic.ts";
 
 const at = (month, hour, minute = 0) => new Date(2026, month - 1, 8, hour, minute, 0);
 
@@ -95,5 +96,38 @@ describe("ambient weather classification", () => {
     expect(classifyWeather(61)).toBe("rain");
     expect(classifyWeather(75)).toBe("snow");
     expect(classifyWeather(95)).toBe("storm");
+  });
+});
+
+describe("transmission arrival detection", () => {
+  const application = {
+    id: "route-01",
+    company: "Apex Industries",
+    role: "Signal Designer",
+    status: "applied",
+    last_activity_at: "2026-08-08T12:00:00.000Z",
+    last_email_id: "mail-01",
+    source: "email",
+    ghosted: false,
+  };
+
+  it("silently establishes a baseline on the first visit", () => {
+    expect(diffTransmissionSnapshots(null, [application])).toEqual([]);
+  });
+
+  it("does not announce unchanged records", () => {
+    expect(diffTransmissionSnapshots(snapshotFor([application]), [application])).toEqual([]);
+  });
+
+  it("announces new and updated routes", () => {
+    const previous = snapshotFor([application]);
+    const updated = { ...application, status: "interview", last_email_id: "mail-02" };
+    const fresh = { ...application, id: "route-02", company: "Nova Works", last_email_id: "mail-03" };
+    const arrivals = diffTransmissionSnapshots(previous, [updated, fresh]);
+
+    expect(arrivals.map((arrival) => [arrival.id, arrival.arrival])).toEqual([
+      ["route-01", "updated"],
+      ["route-02", "new"],
+    ]);
   });
 });

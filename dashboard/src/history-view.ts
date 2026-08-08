@@ -28,7 +28,7 @@ export async function renderHistory(el: HTMLElement) {
     el.innerHTML = `
       <section class="history-section">
         <header class="section-title">
-          <div><span>03</span><p lang="ja">実行履歴</p><small>SCAN HISTORY</small></div>
+          <div><span>04</span><p lang="ja">実行履歴</p><small>SCAN HISTORY</small></div>
           ${routine_url ? `<a class="run-scan" href="${esc(routine_url)}" target="_blank" rel="noopener"><b lang="ja">今すぐ実行</b><small>RUN SCAN ↗</small></a>` : ""}
         </header>
         <div class="history-meta"><b>${String(runs.length).padStart(2, "0")}</b><span>RECENT RUNS</span><p>Latest 50 automated and manual scans.</p></div>

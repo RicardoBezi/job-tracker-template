@@ -109,12 +109,14 @@ async function appView() {
       <nav class="primary-nav" aria-label="Main navigation">
         <button class="active" data-tab="apps"><b>01</b><span lang="ja">応募一覧</span><small>APPLICATIONS</small></button>
         <button data-tab="map"><b>02</b><span lang="ja">黄金経路</span><small>ROAD MAP</small></button>
-        <button data-tab="history"><b>03</b><span lang="ja">実行履歴</span><small>SCAN HISTORY</small></button>
+        <button data-tab="calendar"><b>03</b><span lang="ja">年間信号</span><small>YEAR SIGNAL</small></button>
+        <button data-tab="history"><b>04</b><span lang="ja">実行履歴</span><small>SCAN HISTORY</small></button>
         <button class="sign-out" id="sign-out"><span lang="ja">退出</span><small>SIGN OUT</small></button>
       </nav>
       <main class="content-frame">
         <section id="tab-apps"></section>
         <section id="tab-map" hidden></section>
+        <section id="tab-calendar" hidden></section>
         <section id="tab-history" hidden></section>
       </main>
       <footer class="site-foot"><span>GCN / PERSONAL CAREER ARCHIVE</span><span lang="ja">道は、まだ続いている。</span></footer>
@@ -125,14 +127,16 @@ async function appView() {
 
   const appsEl = root.querySelector<HTMLElement>("#tab-apps")!;
   const mapEl = root.querySelector<HTMLElement>("#tab-map")!;
+  const calendarEl = root.querySelector<HTMLElement>("#tab-calendar")!;
   const historyEl = root.querySelector<HTMLElement>("#tab-history")!;
   const { renderApps } = await import("./apps-view");
-  await renderApps(appsEl);
+  const initialApps = await renderApps(appsEl) ?? [];
 
   const showTab = async (tab: string) => {
     root.querySelectorAll("[data-tab]").forEach((item) => item.classList.toggle("active", (item as HTMLElement).dataset.tab === tab));
     appsEl.hidden = tab !== "apps";
     mapEl.hidden = tab !== "map";
+    calendarEl.hidden = tab !== "calendar";
     historyEl.hidden = tab !== "history";
     if (tab === "map" && mapEl.dataset.ready !== "true") {
       mapEl.dataset.ready = "true";
@@ -141,6 +145,11 @@ async function appView() {
         await showTab("apps");
         appsEl.dispatchEvent(new CustomEvent("gcn:open-application", { detail: { id } }));
       });
+    }
+    if (tab === "calendar" && calendarEl.dataset.ready !== "true") {
+      calendarEl.dataset.ready = "true";
+      const [{ renderCalendar }, { playDailyOpening }] = await Promise.all([import("./calendar-view"), import("./cinematic")]);
+      await renderCalendar(calendarEl, () => void playDailyOpening(initialApps, true));
     }
     if (tab === "history" && historyEl.dataset.ready !== "true") {
       historyEl.dataset.ready = "true";
@@ -157,6 +166,13 @@ async function appView() {
     await logout().catch(() => undefined);
     loginView();
   });
+
+  void (async () => {
+    const { captureTransmissionArrivals, playDailyOpening, playTransmissionArrivals } = await import("./cinematic");
+    const arrivals = captureTransmissionArrivals(initialApps);
+    await playDailyOpening(initialApps);
+    await playTransmissionArrivals(arrivals);
+  })();
 }
 
 async function boot() {

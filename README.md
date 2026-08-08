@@ -22,6 +22,8 @@ Gmail → Codex scheduled task → tracker CLI → hosted API → Neon Postgres
 - “Gone quiet” is derived after 180 silent days and is never stored as a status.
 - Browser sessions and scanner access use separate credentials.
 - Live ambient weather is opt-in. The browser rounds location to two decimal places, sends it to Open-Meteo for current conditions, and never stores the coordinates.
+- The daily title runs once per browser-local date and can be replayed from Year Signal.
+- Arrival animations compare application fingerprints in local storage; the first visit creates a silent baseline and no application data leaves the browser.
 
 ## Stack
 
@@ -32,6 +34,7 @@ Gmail → Codex scheduled task → tracker CLI → hosted API → Neon Postgres
 - Bearer-token authentication for the scanner
 - Vitest for rule and security tests
 - Optional Open-Meteo current conditions for the visual atmosphere
+- A data-driven Year Signal calendar with festivals, applications, activity, and scan history
 
 ## First deployment
 

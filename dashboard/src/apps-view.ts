@@ -16,7 +16,7 @@ const LABELS: Record<Status | "ghosted", { ja: string; en: string }> = {
   ghosted: { ja: "長期未更新", en: "GONE QUIET" },
 };
 
-interface Application {
+export interface Application {
   id: string;
   company: string;
   role: string | null;
@@ -177,7 +177,7 @@ export async function renderApps(el: HTMLElement) {
     applications = result.applications;
   } catch (error) {
     el.innerHTML = `<div class="error-panel"><b>接続エラー / CONNECTION ERROR</b><p>${esc(error instanceof Error ? error.message : error)}</p></div>`;
-    return;
+    return null;
   }
   updateMetrics();
   const counts = Object.fromEntries([...STATUSES, "ghosted"].map((status) => [status, applications.filter((app) => bucket(app) === status).length]));
@@ -241,6 +241,7 @@ export async function renderApps(el: HTMLElement) {
   el.querySelector("#add-application")!.addEventListener("click", () => openEditor(el));
   wireRows(el);
   drawList(el);
+  return applications;
 }
 
 function dialogFrame(titleJa: string, titleEn: string, body: string) {

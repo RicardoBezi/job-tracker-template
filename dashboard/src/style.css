@@ -503,6 +503,181 @@ html[data-weather-day="night"] .weather-layer { opacity: calc(.12 + var(--weathe
 }
 
 /* --------------------------------------------------------------------------
+   Daily title + transmission broadcast
+   -------------------------------------------------------------------------- */
+.cinematic-lock { overflow: hidden; }
+.daily-opening {
+  position: fixed;
+  inset: 0;
+  z-index: 2200;
+  overflow: hidden;
+  isolation: isolate;
+  color: var(--display-white);
+  background: var(--void);
+  animation: opening-enter .35s ease-out both;
+}
+.daily-opening.is-leaving { animation: opening-leave .36s ease-in both; }
+.opening-slice { position: absolute; z-index: -2; inset: -20%; transform: skewX(-17deg); }
+.opening-slice-a { left: -28%; right: 47%; background: var(--signal); animation: opening-slice-a .9s cubic-bezier(.75,0,.2,1) both; }
+.opening-slice-b { left: 64%; background: var(--display-white); opacity: .1; animation: opening-slice-b 1s .08s cubic-bezier(.75,0,.2,1) both; }
+.opening-kanji { position: absolute; z-index: -1; right: 4%; top: -12%; color: rgba(255,255,255,.055); font: 900 min(64vw, 52rem)/1 var(--font-mincho); transform: rotate(6deg); animation: opening-kanji 4.2s ease-out both; }
+.opening-skip { position: absolute; z-index: 10; right: 28px; top: 25px; padding: 8px 10px; display: flex; align-items: center; gap: 12px; color: rgba(255,255,255,.72); background: transparent; border: 1px solid rgba(255,255,255,.35); font: 700 .56rem/1 var(--font-condensed); letter-spacing: .16em; }
+.opening-skip span { color: var(--signal); font-size: 1rem; }
+.opening-skip:hover { color: var(--signal-contrast); background: var(--signal); border-color: var(--signal); }
+.opening-index { position: absolute; left: 3%; right: 3%; top: 28px; padding-right: 130px; display: flex; gap: 22px; pointer-events: none; color: rgba(255,255,255,.65); border-bottom: 1px solid rgba(255,255,255,.36); font: 700 .56rem/2.6 var(--font-condensed); letter-spacing: .16em; }
+.opening-index span:last-child { margin-left: auto; }
+.opening-title { position: absolute; left: clamp(28px, 9vw, 150px); top: 50%; transform: translateY(-52%); }
+.opening-title > p { margin: 0 0 20px; font: 800 .68rem/1 var(--font-condensed); letter-spacing: .23em; animation: opening-copy .55s .5s both; }
+.opening-title h1 { margin: 0; position: relative; width: max-content; color: var(--display-white); font: 800 clamp(8rem, 25vw, 23rem)/.68 var(--font-condensed); letter-spacing: -.09em; text-shadow: 10px 12px 0 rgba(0,0,0,.3); animation: opening-title .75s .18s cubic-bezier(.15,.8,.18,1) both; }
+.opening-title h1::after { content: attr(data-text); position: absolute; inset: 0; color: var(--signal); clip-path: inset(54% 0 23% 0); transform: translateX(10px); opacity: .9; }
+.opening-title > strong { display: block; margin-top: 38px; font: 900 clamp(1.5rem, 3.4vw, 3rem)/1.25 var(--font-mincho); animation: opening-copy .55s .72s both; }
+.opening-title > small { display: block; margin-top: 12px; color: rgba(255,255,255,.68); font: 700 .72rem/1 var(--font-condensed); letter-spacing: .16em; text-transform: uppercase; animation: opening-copy .55s .84s both; }
+.opening-counts { position: absolute; right: 4%; bottom: 38px; display: flex; color: var(--display-white); border-block: 1px solid rgba(255,255,255,.35); animation: opening-copy .5s 1s both; }
+.opening-counts span { min-width: 105px; padding: 10px 13px; display: flex; flex-direction: column; border-right: 1px solid rgba(255,255,255,.2); font: 700 .48rem/1.4 var(--font-condensed); letter-spacing: .12em; }
+.opening-counts b { color: var(--signal); font: 800 2rem/.9 var(--font-condensed); }
+.opening-festival { position: absolute; right: 4%; top: 18%; padding: 11px 15px; display: grid; grid-template-columns: auto 1fr; grid-template-rows: 1fr 1fr; column-gap: 10px; border: 2px solid var(--festival-accent); transform: rotate(3deg); }
+.opening-festival b { grid-row: 1 / 3; color: var(--festival-accent); font: 900 2.2rem/1 var(--font-mincho); }
+.opening-festival span { font-weight: 800; }
+.opening-festival small { color: rgba(255,255,255,.65); font: 700 .5rem/1 var(--font-condensed); letter-spacing: .13em; }
+@keyframes opening-enter { from { opacity: 0; } }
+@keyframes opening-leave { to { opacity: 0; transform: scale(1.025); } }
+@keyframes opening-slice-a { from { transform: translateX(-120%) skewX(-17deg); } }
+@keyframes opening-slice-b { from { transform: translateX(120%) skewX(-17deg); } }
+@keyframes opening-title { from { opacity: 0; transform: translateX(-13%); letter-spacing: -.18em; } }
+@keyframes opening-copy { from { opacity: 0; transform: translateY(12px); } }
+@keyframes opening-kanji { from { opacity: 0; transform: rotate(12deg) scale(.86); } }
+
+.transmission-arrival { position: fixed; inset: 0; z-index: 2100; display: grid; place-items: center; overflow: hidden; color: var(--display-white); background: rgba(2,3,5,.86); backdrop-filter: blur(8px); animation: transmission-in .25s ease-out both; }
+.transmission-arrival::before,
+.transmission-arrival::after { content: ""; position: absolute; z-index: -1; inset: -35%; background: var(--signal); transform: translateX(-68%) skewX(-19deg); }
+.transmission-arrival::after { background: rgba(255,255,255,.09); transform: translateX(69%) skewX(-19deg); }
+.transmission-arrival.is-leaving { animation: opening-leave .35s ease-in both; }
+.transmission-close { position: absolute; right: 25px; top: 22px; width: 43px; height: 43px; color: var(--display-white); background: transparent; border: 1px solid currentColor; font-size: 1.5rem; }
+.transmission-body { width: min(920px, calc(100% - 42px)); min-height: 400px; padding: clamp(28px, 5vw, 68px); display: grid; grid-template-columns: 1fr auto; grid-template-rows: auto 1fr auto; position: relative; color: var(--display-white); background: var(--void-soft); border: 1px solid rgba(255,255,255,.45); box-shadow: 18px 18px 0 rgba(var(--signal-rgb), .68); clip-path: polygon(0 0, 94% 0, 100% 12%, 100% 100%, 6% 100%, 0 88%); transition: opacity .18s, transform .18s; }
+.transmission-body::after { content: "受信"; position: absolute; z-index: 0; right: 1%; bottom: -18%; color: rgba(255,255,255,.04); font: 900 19rem/1 var(--font-mincho); }
+.transmission-body > * { position: relative; z-index: 1; }
+.transmission-body.is-switching { opacity: 0; transform: translateX(24px); }
+.transmission-sequence { grid-column: 1 / -1; display: flex; align-items: center; gap: 14px; color: var(--signal); font: 800 .62rem/1 var(--font-condensed); letter-spacing: .16em; }
+.transmission-sequence i { flex: 1; height: 2px; background: currentColor; }
+.transmission-copy { align-self: center; }
+.transmission-copy small { color: var(--signal); font: 800 .62rem/1 var(--font-condensed); letter-spacing: .17em; }
+.transmission-copy strong { display: block; max-width: 12ch; margin-top: 25px; font: 800 clamp(3.5rem, 9vw, 8rem)/.83 var(--font-condensed); letter-spacing: -.06em; text-transform: uppercase; overflow-wrap: anywhere; }
+.transmission-copy p { margin: 20px 0 0; color: rgba(255,255,255,.68); }
+.transmission-status { grid-column: 1 / -1; padding-top: 14px; display: flex; justify-content: space-between; border-top: 5px solid var(--display-white); font: 800 .62rem/1 var(--font-condensed); letter-spacing: .13em; }
+.transmission-status b { color: var(--signal); }
+@keyframes transmission-in { from { opacity: 0; transform: scale(.97); } }
+
+/* --------------------------------------------------------------------------
+   Year Signal calendar
+   -------------------------------------------------------------------------- */
+.year-signal { margin-top: -20px; }
+.year-titlebar { min-height: 112px; padding-left: 24px; display: grid; grid-template-columns: 1fr auto auto; align-items: stretch; color: var(--display-white); background: var(--ink); border-bottom: 7px solid var(--signal); clip-path: polygon(0 0, 100% 0, 100% 80%, 98% 100%, 0 100%); }
+.year-titlebar > div { display: grid; grid-template-columns: auto 1fr; grid-template-rows: 1fr 1fr; column-gap: 15px; align-items: end; }
+.year-titlebar > div > span { grid-row: 1 / 3; align-self: center; color: var(--signal); font: 800 4rem/.8 var(--font-condensed); transform: rotate(-5deg); }
+.year-titlebar p { margin: 0; align-self: end; font-size: 1rem; font-weight: 800; }
+.year-titlebar small { align-self: start; font: 700 .62rem/1.4 var(--font-condensed); letter-spacing: .18em; }
+.year-titlebar > strong { padding: 0 26px; display: grid; place-items: center; color: var(--ink); background: var(--signal); font: 800 clamp(3.4rem, 7vw, 6rem)/1 var(--font-condensed); letter-spacing: -.05em; transform: skewX(-8deg); }
+.year-titlebar > button { min-width: 160px; padding: 0 20px; display: flex; flex-direction: column; justify-content: center; color: var(--display-white); background: transparent; border: 0; border-left: 1px solid rgba(255,255,255,.24); }
+.year-titlebar > button b { font-size: .8rem; }
+.year-titlebar > button small { color: var(--signal); font: 700 .5rem/1.5 var(--font-condensed); letter-spacing: .13em; }
+.year-titlebar > button:hover { color: var(--signal-contrast); background: var(--signal); }
+.year-titlebar > button:hover small { color: currentColor; }
+.year-intro { min-height: 62px; padding: 10px 18px; display: flex; align-items: center; justify-content: space-between; gap: 20px; border-bottom: 1px solid var(--ink); background: var(--display-white); }
+.year-intro p { margin: 0; font: 800 .65rem/1 var(--font-condensed); letter-spacing: .17em; }
+.year-intro > div { display: flex; gap: 15px; }
+.year-intro span { display: flex; align-items: center; gap: 6px; font: 700 .48rem/1 var(--font-condensed); letter-spacing: .1em; }
+.year-intro i { width: 9px; height: 9px; border: 1px solid var(--ink); border-radius: 50%; }
+.legend-festival { background: var(--festival-accent); }
+.legend-application { background: var(--signal); }
+.legend-activity { box-shadow: inset 0 0 0 2px var(--display-white); background: var(--ink); }
+.legend-today { outline: 2px solid var(--signal); outline-offset: 2px; }
+
+.year-layout { display: grid; grid-template-columns: minmax(0, 1fr) 290px; align-items: start; gap: 22px; padding-top: 26px; }
+.year-grid { min-width: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+.signal-month { min-width: 0; padding: 12px; background: var(--display-white); border: 1px solid var(--ink); box-shadow: 7px 7px 0 rgba(23,23,20,.1); }
+.signal-month > header { min-height: 48px; display: grid; grid-template-columns: auto 1fr auto; align-items: center; border-bottom: 4px solid var(--ink); }
+.signal-month > header > span { color: var(--signal); font: 800 2rem/1 var(--font-condensed); }
+.signal-month > header > div { padding-left: 9px; display: flex; flex-direction: column; }
+.signal-month > header b { font-size: .72rem; }
+.signal-month > header small { color: var(--muted); font: 700 .48rem/1 var(--font-condensed); letter-spacing: .13em; }
+.signal-month > header em { color: rgba(23,23,20,.17); font: 800 2.4rem/1 var(--font-condensed); font-style: normal; }
+.weekday-row,
+.month-days { display: grid; grid-template-columns: repeat(7, 1fr); }
+.weekday-row { padding: 8px 0 4px; color: var(--muted); font: 700 .44rem/1 var(--font-condensed); text-align: center; }
+.signal-day { aspect-ratio: 1; min-width: 0; padding: 2px; position: relative; border: 1px solid transparent; color: var(--ink); background: rgba(var(--signal-rgb), var(--heat-alpha, 0)); font: 700 .55rem/1 var(--font-condensed); }
+.signal-day > span { position: absolute; left: 4px; top: 4px; }
+.signal-day > b { position: absolute; right: 2px; bottom: 1px; color: var(--event-accent); font: 900 .75rem/1 var(--font-mincho); }
+.signal-day > i { width: 4px; height: 4px; position: absolute; left: 4px; bottom: 4px; border-radius: 50%; background: var(--signal); opacity: calc(var(--heat, 0) * 1); }
+.signal-day:is(:hover, :focus-visible, .is-selected) { z-index: 2; color: var(--signal-contrast); background: var(--signal); border-color: var(--ink); outline: 0; transform: scale(1.16) rotate(-3deg); box-shadow: 3px 3px 0 var(--ink); }
+.signal-day:is(:hover, :focus-visible, .is-selected) > b { color: var(--signal-contrast); }
+.signal-day.is-today { outline: 2px solid var(--signal); outline-offset: -2px; }
+.signal-day.is-empty { aspect-ratio: 1; }
+
+.calendar-detail { min-height: 560px; padding: 22px; position: sticky; top: 88px; color: var(--display-white); background: var(--ink); border-top: 7px solid var(--signal); overflow: hidden; }
+.calendar-detail::after { content: "365"; position: absolute; right: -20px; bottom: -20px; color: rgba(255,255,255,.035); font: 800 9rem/1 var(--font-condensed); }
+.calendar-detail > * { position: relative; z-index: 1; }
+.calendar-detail-date { display: grid; grid-template-columns: 1fr auto; grid-template-rows: 1fr 1fr; align-items: center; }
+.calendar-detail-date span { align-self: end; color: var(--signal); font: 700 .6rem/1 var(--font-condensed); letter-spacing: .13em; }
+.calendar-detail-date b { grid-row: 1 / 3; font: 800 4.5rem/.8 var(--font-condensed); }
+.calendar-detail-date small { align-self: start; color: rgba(255,255,255,.55); font: 700 .5rem/1.5 var(--font-condensed); letter-spacing: .12em; }
+.calendar-detail-festival { margin-top: 20px; padding: 10px; display: grid; grid-template-columns: auto 1fr; grid-template-rows: 1fr 1fr; column-gap: 9px; border: 1px solid var(--event-accent); }
+.calendar-detail-festival > b { grid-row: 1 / 3; color: var(--event-accent); font: 900 2.4rem/1 var(--font-mincho); }
+.calendar-detail-festival span { align-self: end; font-weight: 800; }
+.calendar-detail-festival small { align-self: start; color: rgba(255,255,255,.55); font: 700 .47rem/1.4 var(--font-condensed); letter-spacing: .09em; }
+.calendar-detail-counts { margin-top: 24px; display: grid; grid-template-columns: repeat(3, 1fr); border-block: 1px solid rgba(255,255,255,.24); }
+.calendar-detail-counts span { padding: 8px 4px; display: flex; flex-direction: column; font: 700 .42rem/1.3 var(--font-condensed); letter-spacing: .06em; }
+.calendar-detail-counts b { color: var(--signal); font: 800 1.7rem/1 var(--font-condensed); }
+.calendar-detail section { margin-top: 22px; }
+.calendar-detail section > small { display: block; padding-bottom: 7px; color: var(--signal); border-bottom: 2px solid currentColor; font: 700 .5rem/1 var(--font-condensed); letter-spacing: .13em; }
+.calendar-detail section p { margin: 0; padding: 8px 0; display: flex; flex-direction: column; border-bottom: 1px solid rgba(255,255,255,.16); }
+.calendar-detail section p b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .68rem; }
+.calendar-detail section p span { color: rgba(255,255,255,.53); font: 600 .5rem/1.4 var(--font-condensed); letter-spacing: .06em; }
+.calendar-detail-empty { margin-top: 50px; color: rgba(255,255,255,.4); font: 700 .6rem/1 var(--font-condensed); letter-spacing: .16em; }
+
+@media (max-width: 1180px) {
+  .year-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 850px) {
+  .year-layout { grid-template-columns: 1fr; }
+  .calendar-detail { min-height: 350px; position: static; }
+}
+
+@media (max-width: 700px) {
+  .opening-index span:nth-child(2) { display: none; }
+  .opening-index span:last-child { margin-left: auto; }
+  .opening-title { left: 24px; right: 18px; top: 45%; }
+  .opening-title h1 { font-size: clamp(7.5rem, 43vw, 11rem); }
+  .opening-title > strong { max-width: 12ch; margin-top: 30px; font-size: 1.45rem; }
+  .opening-title > small { max-width: 28ch; line-height: 1.4; }
+  .opening-counts { left: 20px; right: 20px; bottom: 26px; }
+  .opening-counts span { flex: 1; min-width: 0; }
+  .opening-festival { right: 18px; top: 14%; transform: scale(.8) rotate(3deg); transform-origin: top right; }
+  .transmission-body { min-height: 520px; padding: 30px 24px; }
+  .transmission-copy strong { font-size: clamp(3.2rem, 16vw, 5rem); }
+  .transmission-status { flex-direction: column; gap: 8px; }
+  .year-signal { margin: -10px -2px 0; }
+  .year-titlebar { min-height: 80px; padding-left: 12px; grid-template-columns: 1fr auto; }
+  .year-titlebar > div > span { font-size: 2.7rem; }
+  .year-titlebar > strong { padding-inline: 14px; font-size: 2.8rem; }
+  .year-titlebar > button { grid-column: 1 / -1; min-height: 45px; flex-direction: row; align-items: center; gap: 8px; border-top: 1px solid rgba(255,255,255,.2); border-left: 0; }
+  .year-intro { align-items: flex-start; flex-direction: column; }
+  .year-intro > div { max-width: 100%; overflow-x: auto; padding-bottom: 4px; }
+  .year-intro span { white-space: nowrap; }
+  .year-layout { padding-top: 15px; }
+  .year-grid { grid-template-columns: 1fr; gap: 12px; }
+  .signal-month { padding: 10px; }
+  .calendar-detail { min-height: 390px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .daily-opening,
+  .daily-opening *,
+  .transmission-arrival,
+  .transmission-arrival * { animation: none !important; transition: none !important; }
+}
+
+/* --------------------------------------------------------------------------
    GCN / THE GOLDEN ROAD — cinematic campaign layer
    -------------------------------------------------------------------------- */
 
@@ -529,9 +704,10 @@ html[data-signal="rejected"] { --signal: #ef493d; --signal-rgb: 239, 73, 61; --s
 html[data-signal="withdrawn"] { --signal: #9da0a5; --signal-rgb: 157, 160, 165; }
 html[data-signal="ghosted"] { --signal: #9b8dbb; --signal-rgb: 155, 141, 187; --signal-contrast: #fffdf7; }
 
-html { color-scheme: dark light; }
+html { overflow-x: clip; color-scheme: dark light; }
 body {
   min-height: 100vh;
+  overflow-x: clip;
   background: var(--void);
   background-image:
     linear-gradient(rgba(255,255,255,.022) 1px, transparent 1px),
