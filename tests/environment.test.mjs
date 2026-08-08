@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { environmentFor, seasonFor } from "../dashboard/src/environment.ts";
+import { FESTIVALS, festivalFor, glyphFor } from "../dashboard/src/calendar.ts";
 
 const at = (month, hour, minute = 0) => new Date(2026, month - 1, 8, hour, minute, 0);
 
@@ -38,5 +39,49 @@ describe("24-hour color wheel", () => {
     const energized = environmentFor(at(6, 12), "applied", 1);
     expect(interview.hue).not.toBe(applied.hue);
     expect(energized.signal).not.toBe(applied.signal);
+  });
+});
+
+describe("six-hour seasonal glyphs", () => {
+  it("uses a distinct background character for every season and interval", () => {
+    const glyphs = ["winter", "spring", "summer", "autumn"].flatMap((season) =>
+      [0, 6, 12, 18].map((hour) => glyphFor(at(1, hour), season).glyph));
+    expect(glyphs).toHaveLength(16);
+    expect(new Set(glyphs).size).toBe(16);
+  });
+
+  it("changes exactly at each six-hour boundary", () => {
+    expect(glyphFor(at(1, 5, 59), "winter").slot).toBe("00–06");
+    expect(glyphFor(at(1, 6), "winter").slot).toBe("06–12");
+    expect(glyphFor(at(1, 12), "winter").slot).toBe("12–18");
+    expect(glyphFor(at(1, 18), "winter").slot).toBe("18–24");
+  });
+});
+
+describe("curated 2026 cultural calendar", () => {
+  const on = (iso) => new Date(`${iso}T12:00:00`);
+
+  it("keeps every curated event reachable", () => {
+    for (const festival of FESTIVALS) expect(festivalFor(on(festival.start))).not.toBeNull();
+  });
+
+  it("lets specific celebrations override their surrounding holiday period", () => {
+    expect(festivalFor(on("2026-02-16"))?.key).toBe("cny-eve");
+    expect(festivalFor(on("2026-02-17"))?.key).toBe("cny-day");
+    expect(festivalFor(on("2026-05-05"))?.key).toBe("childrens-day");
+    expect(festivalFor(on("2026-05-04"))?.key).toBe("golden-week");
+  });
+
+  it("combines celebrations that land on the same date", () => {
+    const festival = festivalFor(on("2026-03-03"));
+    expect(festival?.region).toBe("JP · CN");
+    expect(festival?.name).toBe("HINA + LANTERN FESTIVAL");
+  });
+
+  it("does not promote visually generic statutory holidays", () => {
+    expect(festivalFor(on("2026-02-11"))).toBeNull();
+    expect(festivalFor(on("2026-03-20"))).toBeNull();
+    expect(festivalFor(on("2026-07-20"))).toBeNull();
+    expect(festivalFor(on("2026-11-23"))).toBeNull();
   });
 });

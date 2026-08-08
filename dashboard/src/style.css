@@ -16,6 +16,7 @@
   --day-progress: 50%;
   --daylight: .5;
   --data-energy: .35;
+  --festival-accent: var(--signal);
 }
 
 * { box-sizing: border-box; }
@@ -409,6 +410,17 @@ body::before {
 .login-poster::after { right: -52px; bottom: -120px; color: rgba(var(--signal-rgb), .15); mix-blend-mode: multiply; }
 .poster-atmosphere { position: absolute; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; }
 .poster-atmosphere b { position: absolute; right: 4%; top: 6%; color: rgba(0,0,0,.08); font: 900 clamp(15rem, 34vw, 28rem)/1 var(--font-mincho); }
+.environment-glyph::after {
+  content: attr(data-slot);
+  position: absolute;
+  left: 50%;
+  top: 72%;
+  width: max-content;
+  color: currentColor;
+  font: 700 .7rem/1 var(--font-condensed);
+  letter-spacing: .24em;
+  transform: translateX(-50%);
+}
 .poster-atmosphere i { position: absolute; left: 43%; top: -20%; width: 4px; height: 140%; background: var(--signal); transform: rotate(19deg); box-shadow: 18px 0 0 rgba(var(--signal-rgb), .2); }
 .poster-atmosphere i:nth-child(2) { left: 47%; width: 1px; background: rgba(255,255,255,.35); box-shadow: none; }
 .poster-index { border-color: var(--display-white); }
@@ -433,6 +445,61 @@ body::before {
 .login-control button:hover { color: var(--signal-contrast); background: var(--signal); }
 .poster-foot { color: rgba(255,255,255,.7); border-color: rgba(255,255,255,.45); }
 @keyframes poster-arrive { from { opacity: 0; transform: translateY(18px) scale(.985); } }
+
+/* Cultural calendar signal */
+.festival-stamp {
+  width: max-content;
+  max-width: min(100%, 390px);
+  margin-top: 24px;
+  padding: 8px 12px 9px;
+  display: grid;
+  grid-template-columns: auto auto;
+  gap: 2px 9px;
+  color: var(--display-white);
+  background: color-mix(in srgb, var(--festival-accent) 18%, transparent);
+  border: 1px solid var(--festival-accent);
+  border-left-width: 6px;
+  box-shadow: 6px 6px 0 color-mix(in srgb, var(--festival-accent) 32%, transparent);
+}
+.festival-stamp > span { grid-row: 1 / 3; align-self: center; color: var(--festival-accent); font: 800 .64rem/1 var(--font-condensed); letter-spacing: .13em; }
+.festival-stamp > b { font: 800 .78rem/1.2 var(--font-gothic); letter-spacing: .05em; }
+.festival-stamp > small { color: rgba(255,255,255,.62); font: 700 .52rem/1.2 var(--font-condensed); letter-spacing: .16em; }
+.login-festival { position: absolute; z-index: 4; top: 55px; right: 28px; margin: 0; color: var(--ink); background: color-mix(in srgb, var(--festival-accent) 16%, var(--display-white)); }
+.login-festival > small { color: rgba(23,23,20,.58); }
+
+html[data-festival] :is(.login-grid h1, .identity h1) {
+  color: transparent;
+  background: linear-gradient(132deg, var(--display-white) 0 38%, var(--festival-accent) 38% 52%, var(--display-white) 52% 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  filter: drop-shadow(6px 7px 0 color-mix(in srgb, var(--festival-accent) 55%, #050607));
+}
+html[data-festival] :is(.login-grid h1, .identity h1)::before {
+  content: attr(data-festival-mark);
+  position: absolute;
+  z-index: 3;
+  right: -.42em;
+  top: -.12em;
+  width: .68em;
+  height: .68em;
+  display: grid;
+  place-items: center;
+  color: var(--festival-accent);
+  background: color-mix(in srgb, var(--void) 86%, transparent);
+  border: 3px solid currentColor;
+  border-radius: 50%;
+  font: 900 .32em/1 var(--font-mincho);
+  letter-spacing: 0;
+  transform: rotate(-9deg);
+  box-shadow: 0 0 0 5px color-mix(in srgb, var(--festival-accent) 16%, transparent);
+}
+html[data-festival-region="cn"] :is(.login-grid h1, .identity h1)::before { border-radius: 3px; transform: rotate(5deg); }
+html[data-festival-region="jp-cn"] :is(.login-grid h1, .identity h1)::before { border-radius: 3px 50% 3px 50%; transform: rotate(9deg); }
+html[data-festival-tone="romance"] :is(.login-grid h1, .identity h1) { filter: drop-shadow(7px 7px 0 color-mix(in srgb, var(--festival-accent) 72%, #5b1738)); }
+html[data-festival-tone="lantern"] .festival-stamp,
+html[data-festival-tone="new-year"] .festival-stamp { box-shadow: 6px 6px 0 color-mix(in srgb, var(--festival-accent) 42%, transparent), 0 0 26px color-mix(in srgb, var(--festival-accent) 30%, transparent); }
+html[data-festival-tone="night"] :is(.login-grid h1, .identity h1)::before { color: #ff8a25; background: #241032; border-style: dashed; }
+html[data-festival-tone="remembrance"] :is(.login-grid h1, .identity h1) { filter: saturate(.72) drop-shadow(5px 6px 0 color-mix(in srgb, var(--festival-accent) 44%, #14251a)); }
 
 /* Broadcast shell */
 .site-shell {
@@ -544,6 +611,7 @@ html[data-season="autumn"] :is(.campaign-atmosphere, .poster-atmosphere)::after 
 @keyframes summer-pulse { to { transform: scale(1.08); opacity: calc(.27 + var(--data-energy) * .38); } }
 @keyframes autumn-drift { to { transform: translate3d(-55px, 75px, 0) rotate(20deg); } }
 .campaign-atmosphere b { position: absolute; left: 38%; top: -14%; color: rgba(255,255,255,.055); font: 900 35rem/1 var(--font-mincho); transform: rotate(-7deg); }
+.campaign-atmosphere .environment-glyph::after { top: 76%; color: rgba(255,255,255,.22); font-size: .8rem; }
 .campaign-atmosphere i { position: absolute; top: -25%; left: 57%; width: 1px; height: 155%; background: rgba(255,255,255,.2); transform: rotate(24deg); }
 .campaign-atmosphere i:nth-of-type(2) { left: 63%; width: 6px; background: var(--signal); box-shadow: 16px 0 0 rgba(var(--signal-rgb), .25); }
 .campaign-atmosphere i:nth-of-type(3) { left: 78%; background: rgba(255,255,255,.08); }
@@ -713,6 +781,8 @@ html[data-season="autumn"] :is(.campaign-atmosphere, .poster-atmosphere)::after 
   .login-grid .jp-title { max-width: 11ch; font-size: 1.55rem; line-height: 1.45; }
   .login-grid .vertical-copy { color: var(--display-white); border-color: rgba(255,255,255,.4); }
   .poster-atmosphere i { left: 68%; }
+  .login-festival { top: 65px; right: 12px; max-width: 58%; transform: scale(.82); transform-origin: top right; }
+  .festival-stamp { margin-top: 17px; }
   .site-shell { width: 100%; margin: 0; border: 0; }
   .utility-bar { padding-inline: 10px; }
   .utility-bar > :nth-child(2) { display: none; }

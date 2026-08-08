@@ -1,3 +1,5 @@
+import { festivalFor, glyphFor } from "./calendar";
+
 export type SeasonKey = "winter" | "spring" | "summer" | "autumn";
 
 type Season = {
@@ -86,6 +88,8 @@ export function environmentFor(date: Date, stage = "applied", energy = 0.35) {
   const seconds = date.getHours() * 3600 + date.getMinutes() * 60 + date.getSeconds();
   const dayProgress = seconds / 86400;
   const season = seasonFor(date);
+  const glyph = glyphFor(date, season.key);
+  const festival = festivalFor(date);
   const hue = normalizeHue(chromaticHue(dayProgress) + season.hueOffset + (STAGE_OFFSETS[stage] ?? 0));
   const normalizedEnergy = clamp(energy);
   const saturation = Math.round(72 + normalizedEnergy * 16);
@@ -97,6 +101,8 @@ export function environmentFor(date: Date, stage = "applied", energy = 0.35) {
 
   return {
     season,
+    glyph,
+    festival,
     phase: { ja: phase[1], en: phase[2] },
     dayProgress,
     daylight,
@@ -114,6 +120,17 @@ function renderEnvironment(now = new Date()) {
   const root = document.documentElement;
   root.dataset.season = environment.season.key;
   root.dataset.dayPhase = environment.phase.en.toLowerCase().replaceAll(" ", "-");
+  if (environment.festival) {
+    root.dataset.festival = environment.festival.key;
+    root.dataset.festivalTone = environment.festival.tone;
+    root.dataset.festivalRegion = environment.festival.region.toLowerCase().replaceAll(" · ", "-");
+    root.style.setProperty("--festival-accent", environment.festival.accent);
+  } else {
+    delete root.dataset.festival;
+    delete root.dataset.festivalTone;
+    delete root.dataset.festivalRegion;
+    root.style.removeProperty("--festival-accent");
+  }
   root.style.setProperty("--signal", environment.signal);
   root.style.setProperty("--signal-rgb", environment.signalRgb);
   root.style.setProperty("--signal-secondary", environment.secondary);
@@ -130,8 +147,27 @@ function renderEnvironment(now = new Date()) {
   const date = document.getElementById("environment-date");
   if (time) time.textContent = environment.time;
   if (phase) phase.textContent = `${environment.phase.ja} / ${environment.phase.en}`;
-  if (season) season.textContent = `${environment.season.ja} / ${environment.season.en} · ${environment.season.condition}`;
+  if (season) season.textContent = `${environment.season.ja} / ${environment.season.en} · ${environment.glyph.glyph} ${environment.glyph.slot}`;
   if (date) date.textContent = environment.date;
+
+  document.querySelectorAll<HTMLElement>(".environment-glyph").forEach((element) => {
+    element.textContent = environment.glyph.glyph;
+    element.dataset.slot = `${environment.glyph.slot} / ${environment.glyph.reading}`;
+  });
+  document.querySelectorAll<HTMLElement>("h1[data-text='GCN']").forEach((element) => {
+    if (environment.festival) element.dataset.festivalMark = environment.festival.mark;
+    else delete element.dataset.festivalMark;
+  });
+  document.querySelectorAll<HTMLElement>(".festival-stamp").forEach((element) => {
+    element.hidden = !environment.festival;
+    if (!environment.festival) return;
+    const region = element.querySelector<HTMLElement>("[data-festival-region]");
+    const native = element.querySelector<HTMLElement>("[data-festival-native]");
+    const name = element.querySelector<HTMLElement>("[data-festival-name]");
+    if (region) region.textContent = environment.festival.region;
+    if (native) native.textContent = environment.festival.native;
+    if (name) name.textContent = environment.festival.name;
+  });
 }
 
 export function startEnvironment() {

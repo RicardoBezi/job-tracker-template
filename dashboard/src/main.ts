@@ -12,8 +12,9 @@ function loginView(message = "") {
   root.innerHTML = `
     <section class="login-stage">
       <div class="login-poster" aria-labelledby="login-title">
-        <div class="poster-atmosphere" aria-hidden="true"><i></i><i></i><b>道</b></div>
+        <div class="poster-atmosphere" aria-hidden="true"><i></i><i></i><b class="environment-glyph">道</b></div>
         <div class="poster-index">転職活動記録 <span>/ PRIVATE ARCHIVE</span></div>
+        <div class="festival-stamp login-festival" hidden role="status"><span data-festival-region></span><b data-festival-native></b><small data-festival-name></small></div>
         <div class="login-grid">
           <div>
             <p class="edition">THE GOLDEN ROAD — 2026</p>
@@ -34,6 +35,8 @@ function loginView(message = "") {
         <div class="poster-foot"><span>PRIVATE SYSTEM</span><span>東京 / NEW YORK</span><span>NO. 001</span></div>
       </div>
     </section>`;
+
+  startEnvironment();
 
   root.querySelector<HTMLFormElement>("#login-form")!.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -76,12 +79,13 @@ async function appView() {
         </div>
       </div>
       <header class="campaign-head">
-        <div class="campaign-atmosphere" aria-hidden="true"><b>道</b><i></i><i></i><i></i></div>
+        <div class="campaign-atmosphere" aria-hidden="true"><b class="environment-glyph">道</b><i></i><i></i><i></i></div>
         <div class="identity">
           <p class="edition">THE GOLDEN ROAD / CURRENT SIGNAL</p>
           <h1 data-text="GCN">GCN</h1>
           <p lang="ja" class="campaign-line">「ゴールデン・ロード」は続く。</p>
           <p class="english-line">YOUR CAREER, IN MOTION.</p>
+          <div class="festival-stamp" hidden role="status"><span data-festival-region></span><b data-festival-native></b><small data-festival-name></small></div>
         </div>
         <p class="vertical-copy" lang="ja" aria-hidden="true">進捗記録</p>
         <section class="hero-focus" aria-label="Featured active application">
