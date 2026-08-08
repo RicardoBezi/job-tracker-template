@@ -1,4 +1,5 @@
 import { api } from "./api";
+import { setEnvironmentData, setEnvironmentStage } from "./environment";
 
 const GMAIL_ACCOUNT = 0;
 const STATUSES = ["applied", "assessment", "interview", "next-phase", "offer", "rejected", "withdrawn"] as const;
@@ -64,6 +65,7 @@ function toast(message: string) {
 }
 
 function updateMetrics() {
+  setEnvironmentData(applications);
   const set = (id: string, value: number) => { const el = document.getElementById(id); if (el) el.textContent = String(value).padStart(2, "0"); };
   set("metric-all", applications.length);
   set("metric-interview", applications.filter((app) => app.status === "interview").length);
@@ -99,7 +101,7 @@ function currentSignal() {
 }
 
 function setSignal(status: string) {
-  document.documentElement.dataset.signal = status;
+  setEnvironmentStage(status);
 }
 
 function syncPipeline(el: HTMLElement) {

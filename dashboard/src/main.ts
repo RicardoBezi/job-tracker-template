@@ -1,4 +1,5 @@
 import { login, logout, session } from "./api";
+import { setEnvironmentStage, startEnvironment } from "./environment";
 import "./style.css";
 
 const root = document.getElementById("app")!;
@@ -7,7 +8,7 @@ const esc = (value: string) => value.replace(/[&<>"']/g, (char) => ({
 }[char]!));
 
 function loginView(message = "") {
-  document.documentElement.dataset.signal = "applied";
+  setEnvironmentStage("applied");
   root.innerHTML = `
     <section class="login-stage">
       <div class="login-poster" aria-labelledby="login-title">
@@ -55,11 +56,17 @@ function loginView(message = "") {
 }
 
 async function appView() {
-  document.documentElement.dataset.signal = "applied";
+  setEnvironmentStage("applied");
   root.innerHTML = `
     <div class="site-shell">
       <div class="utility-bar">
         <span lang="ja">転職活動記録</span><span>/ PRIVATE ARCHIVE / ${new Date().getFullYear()}</span>
+        <div class="environment-readout" aria-label="Local time and seasonal atmosphere">
+          <time id="environment-time">--:--</time>
+          <span id="environment-phase">現在時刻 / LOCAL TIME</span>
+          <span id="environment-season">季節 / SEASON</span>
+          <small id="environment-date">----.--.--</small>
+        </div>
         <span class="online"><i></i> ONLINE</span>
       </div>
       <div class="signal-ticker" aria-label="The Golden Road campaign message">
@@ -102,6 +109,8 @@ async function appView() {
       <footer class="site-foot"><span>GCN / PERSONAL CAREER ARCHIVE</span><span lang="ja">道は、まだ続いている。</span></footer>
     </div>`;
 
+  startEnvironment();
+
   const appsEl = root.querySelector<HTMLElement>("#tab-apps")!;
   const historyEl = root.querySelector<HTMLElement>("#tab-history")!;
   const { renderApps } = await import("./apps-view");
@@ -138,4 +147,5 @@ async function boot() {
 }
 
 window.addEventListener("gcn:unauthorized", () => loginView("Session expired. Please sign in again."));
+startEnvironment();
 boot();

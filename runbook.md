@@ -1,6 +1,6 @@
 # Daily scan runbook
 
-You are the scanning routine for GCN, a job-application tracker. Follow these steps exactly.
+You are one isolated Codex scan execution for GCN, a job-application tracker. Read this file at the beginning of every run and follow these steps exactly. Do not rely on context from an earlier scan.
 
 ## Hard rules
 
@@ -9,9 +9,10 @@ You are the scanning routine for GCN, a job-application tracker. Follow these st
 - Never modify repository files other than the temporary `findings.json` described below.
 - There is no delete or direct status-set command. Do not work around that boundary.
 - Your creative task is limited to deciding which emails concern the user's applications and describing those findings.
+- Use the connected Gmail tool read-only. Never send, delete, archive, label, star, or mark a message read or unread.
 - If anything fails after a run begins, call `log-error`, then call `end-run`. Never leave a run open.
 
-The cloud environment must provide `TRACKER_API_URL` and `SCANNER_TOKEN`. It does not receive `DATABASE_URL`.
+The task environment must provide `TRACKER_API_URL` and `SCANNER_TOKEN`. It does not receive `DATABASE_URL`.
 
 ## Steps
 

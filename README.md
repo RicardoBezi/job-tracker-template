@@ -2,14 +2,14 @@
 
 A private, cloud-hosted job application tracker with a Japanese editorial interface.
 
-GCN reads findings prepared by a Claude Code Gmail routine, validates them in deterministic application code, and stores the accepted changes in Neon Postgres. The browser talks only to a same-origin API; database credentials never reach the frontend.
+GCN reads findings prepared by an isolated Codex Gmail task, validates them in deterministic application code, and stores the accepted changes in Neon Postgres. The browser talks only to a same-origin API; database credentials never reach the frontend.
 
 GCN covers **The Golden Road**. The acronym is intentionally left unexpanded in public-facing copy.
 
 ```text
-Gmail → Claude cloud routine → tracker CLI → hosted API → Neon Postgres
-                                              ↑
-                                  authenticated GCN dashboard
+Gmail → Codex scheduled task → tracker CLI → hosted API → Neon Postgres
+                                             ↑
+                                 authenticated GCN dashboard
 ```
 
 ## Design rules
@@ -93,16 +93,18 @@ Configure these production environment variables:
 
 Pushes to the connected production branch deploy automatically. Pull requests run tests and a dashboard build through `.github/workflows/ci.yml`.
 
-### 5. Configure the Claude routine
+### 5. Configure the Codex email task
 
-Give the cloud environment only:
+Give the scheduled task environment only (the tracker CLI also reads the gitignored `.env.local`):
 
 ```text
 TRACKER_API_URL=https://your-project.vercel.app
 SCANNER_TOKEN=<the scanner token configured in Vercel>
 ```
 
-Connect Gmail, point the routine at this repository, restrict it to `Bash(node scripts/tracker.mjs *)`, and instruct it to follow `runbook.md` exactly. The routine does not need a database connection string.
+Connect Gmail to ChatGPT, open this repository as a local project in the Codex desktop app, and create a standalone scheduled task using the prompt in `codex-task.md`. A standalone task starts each scan from its saved prompt instead of accumulating one long conversation's context.
+
+The desktop app and computer must be running when a local scheduled task is due. A web task can use connected tools but cannot access this local repository, so the current CLI-based scanner should use the desktop task. The task does not need a database connection string and must follow `runbook.md` exactly.
 
 ### 6. Retire an older browser-direct deployment
 
